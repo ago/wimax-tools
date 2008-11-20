@@ -1,0 +1,15 @@
+
+
+To compile, you need:
+
+ - the path to the i2400m Linux kernel driver source.
+ - libnl (version 1 at least) development files
+
+Run
+
+$ export I2400M=/path/to/
+$ ./configure
+$ make
+$ make install
+
+
