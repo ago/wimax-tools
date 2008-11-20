@@ -71,6 +71,7 @@
 #include <errno.h>
 #include <assert.h>
 #include <linux/types.h>
+#include <net/if.h>
 #include <netlink/msg.h>
 #include <netlink/netlink.h>
 #include <netlink/genl/genl.h>
@@ -473,12 +474,17 @@ struct wimaxll_handle *wimaxll_open(const char *device)
 	}
 
 	/* Lookup the generic netlink family */
-	snprintf(buf, sizeof(buf), "WiMAX %s", wmx->name);
+	wmx->ifidx = if_nametoindex(wmx->name);
+	if (wmx->ifidx == 0) {
+		wimaxll_msg(wmx, "E: device %s does not exist\n", wmx->name);
+		goto error_no_dev;
+	}
+	snprintf(buf, sizeof(buf), "WiMAX %u", wmx->ifidx);
 	result = genl_ctrl_resolve(wmx->nlh_tx, buf);
 	if (result < 0) {
 		wimaxll_msg(wmx, "E: device %s presents no WiMAX interface; "
 			  "it might not exist, not be be a WiMAX device or "
-			  "support an interface unknown to libwimax: %d\n",
+			  "support an interface unknown to libwimaxll: %d\n",
 			  wmx->name, result);
 		goto error_ctrl_resolve;
 	}
@@ -506,6 +512,7 @@ struct wimaxll_handle *wimaxll_open(const char *device)
 error_msg_open:
 error_cmd_open:
 error_ctrl_resolve:
+error_no_dev:
 	nl_close(wmx->nlh_tx);
 error_nl_connect_tx:
 	nl_handle_destroy(wmx->nlh_tx);

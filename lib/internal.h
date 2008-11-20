@@ -84,6 +84,7 @@ struct wimaxll_mc_group {
  *
  * FIXME: this needs some rewriting
  *
+ * \param ifidx Interface Index 
  * \param nlh_tx handle for writing to the kernel.
  *     Internal note: You \b have \b to set the handlers for
  *     %NL_CB_VALID and nl_cb_err() callbacks, as each callsite will
@@ -100,6 +101,7 @@ struct wimaxll_mc_group {
  *     driver implements.
  */
 struct wimaxll_handle {
+	unsigned ifidx;
 	struct nl_handle *nlh_tx;
 	int gnl_family_id;
 	unsigned mc_msg;
