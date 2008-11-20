@@ -276,7 +276,7 @@ config.h: stamp-h1
 stamp-h1: $(srcdir)/config.h.in $(top_builddir)/config.status
 	@rm -f stamp-h1
 	cd $(top_builddir) && $(SHELL) ./config.status lib/config.h
-$(srcdir)/config.h.in: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
+$(srcdir)/config.h.in: @MAINTAINER_MODE_TRUE@ $(am__configure_deps) 
 	cd $(top_srcdir) && $(AUTOHEADER)
 	rm -f stamp-h1
 	touch $@
@@ -312,7 +312,7 @@ uninstall-libLIBRARIES:
 
 clean-libLIBRARIES:
 	-test -z "$(lib_LIBRARIES)" || rm -f $(lib_LIBRARIES)
-libwimaxll.a: $(libwimaxll_a_OBJECTS) $(libwimaxll_a_DEPENDENCIES)
+libwimaxll.a: $(libwimaxll_a_OBJECTS) $(libwimaxll_a_DEPENDENCIES) 
 	-rm -f libwimaxll.a
 	$(libwimaxll_a_AR) libwimaxll.a $(libwimaxll_a_OBJECTS) $(libwimaxll_a_LIBADD)
 	$(RANLIB) libwimaxll.a
@@ -343,7 +343,7 @@ clean-libLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
-libwimaxll.la: $(libwimaxll_la_OBJECTS) $(libwimaxll_la_DEPENDENCIES)
+libwimaxll.la: $(libwimaxll_la_OBJECTS) $(libwimaxll_la_DEPENDENCIES) 
 	$(libwimaxll_la_LINK) -rpath $(libdir) $(libwimaxll_la_OBJECTS) $(libwimaxll_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
