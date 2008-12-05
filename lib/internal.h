@@ -155,7 +155,6 @@ void wimaxll_mch_maybe_set_result(struct wimaxll_mc_handle *mch, int val)
 
 
 /* Utilities */
-ssize_t wimaxll_wait_for_rp_result(struct wimaxll_handle *);
 int wimaxll_wait_for_ack(struct wimaxll_handle *);
 int wimaxll_gnl_handle_msg_to_user(struct wimaxll_handle *,
 				 struct wimaxll_mc_handle *,
