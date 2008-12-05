@@ -68,7 +68,6 @@ int main(int argc, char **argv)
 		fprintf(stderr, "E: wimaxll_reset(): %d\n", result);
 		goto error_rfkill;
 	}
-	result = 0;
 error_rfkill:
 	wimaxll_close(wmx);
 error_wimaxll_open:
