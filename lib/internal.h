@@ -125,6 +125,10 @@ struct wimaxll_handle {
  * This way the driver can define it's own private pipes (if needed)
  * for high bandwidth traffic (for example, tracing information)
  * without affecting the rest of the groups (channels).
+ *
+ * msg_done is used by the ack and error generic netlink callbacks to
+ * indicate to the message receving loop that all the parts of the
+ * message have been received.
  */
 struct wimaxll_mc_handle {
 	int idx;
@@ -132,7 +136,8 @@ struct wimaxll_mc_handle {
 	struct nl_handle *nlh_rx;
 	struct nl_cb *nl_cb;
 	ssize_t result;
-
+	unsigned msg_done:1;		/* internal */
+	
 	wimaxll_msg_to_user_cb_f msg_to_user_cb;
 	struct wimaxll_gnl_cb_context *msg_to_user_context;
 
@@ -159,6 +164,7 @@ int wimaxll_gnl_handle_state_change(struct wimaxll_handle *,
 				  struct wimaxll_mc_handle *,
 				  struct nl_msg *);
 int wimaxll_gnl_error_cb(struct sockaddr_nl *, struct nlmsgerr *, void *);
+int wimaxll_gnl_ack_cb(struct nl_msg *msg, void *_mch);
 struct wimaxll_mc_handle *__wimaxll_get_mc_handle(struct wimaxll_handle *,
 					      int pipe_id);
 

@@ -78,8 +78,9 @@ int wimaxll_gnl_error_cb(struct sockaddr_nl *nla, struct nlmsgerr *nlerr,
 	d_fnstart(7, wmx, "(nla %p nlnerr %p [%d] mch %p)\n",
 		  nla, nlerr, nlerr->error, _mch);
 	wimaxll_mch_maybe_set_result(mch, nlerr->error);
-	d_fnend(7, wmx, "(nla %p nlnerr %p [%d] mch %p) = %d\n",
-		nla, nlerr, nlerr->error, _mch, NL_STOP);
+	mch->msg_done = 1;
+	d_fnend(7, wmx, "(nla %p nlnerr %p [%d] mch %p) = NL_STOP\n",
+		nla, nlerr, nlerr->error, _mch);
 	return NL_STOP;
 }
 
@@ -140,6 +141,7 @@ int wimaxll_gnl_ack_cb(struct nl_msg *msg, void *_mch)
 	if (nl_err->error < 0)
 		d_printf(2, NULL, "D: netlink ack: received netlink error %d\n",
 			  nl_err->error);
+	mch->msg_done = 1;
 error_ack_short:
 error_bad_type:
 	d_fnend(7, NULL, "(msg %p mch %p) = NL_STOP\n", msg, _mch);
@@ -168,17 +170,24 @@ int wimaxll_wait_for_ack(struct wimaxll_handle *wmx)
 
 	fake_mch.wmx = wmx;
 	fake_mch.result = -EINPROGRESS;
+	fake_mch.msg_done = 0;
 
 	cb = nl_socket_get_cb(wmx->nlh_tx);
 	nl_cb_set(cb, NL_CB_ACK, NL_CB_CUSTOM, wimaxll_gnl_ack_cb, &fake_mch);
 	nl_cb_set(cb, NL_CB_VALID, NL_CB_CUSTOM, NL_CB_DEFAULT, NULL);
 	nl_cb_err(cb, NL_CB_CUSTOM, wimaxll_gnl_error_cb, &fake_mch);
-	result = nl_recvmsgs_default(wmx->nlh_tx);
+	do
+		result = nl_recvmsgs(wmx->nlh_tx, cb);
+	while (fake_mch.msg_done == 0 && result >= 0);
+	result = fake_mch.result;
 	nl_cb_set(cb, NL_CB_ACK, NL_CB_CUSTOM, NL_CB_DEFAULT, NULL);
+	nl_cb_set(cb, NL_CB_VALID, NL_CB_CUSTOM, NL_CB_DEFAULT, NULL);
+	nl_cb_err(cb, NL_CB_CUSTOM, NL_CB_DEFAULT, NULL);
 	nl_cb_put(cb);
 	if (result < 0)
 		return result;
-	return fake_mch.result;
+	else
+		return fake_mch.result;
 }
 
 
@@ -274,9 +283,6 @@ error_parse:
  *
  * This function simplifies waiting for that and getting the reply.
  *
- * You still need to wait for the ack in your function calling
- * nl_wait_for_ack().
- *
  * \note We use the same handler used for transmission in the TX side
  *     and it's callback set, that we modifiy. As noted in the doc for
  *     \a struct wimaxll_handle, each call site to nl_recvmsgs_default()
@@ -292,11 +298,21 @@ ssize_t wimaxll_wait_for_rp_result(struct wimaxll_handle *wmx)
 	d_fnstart(5, wmx, "(wmx %p)\n", wmx);
 	fake_mch.wmx = wmx;
 	fake_mch.result = -EINPROGRESS;
+	fake_mch.msg_done = 0;
 	cb = nl_socket_get_cb(wmx->nlh_tx);
+	nl_cb_set(cb, NL_CB_ACK, NL_CB_CUSTOM,
+		  wimaxll_gnl_ack_cb, &fake_mch);
 	nl_cb_set(cb, NL_CB_VALID, NL_CB_CUSTOM,
 		  wimaxll_gnl_rp_result_cb, &fake_mch);
 	nl_cb_err(cb, NL_CB_CUSTOM, wimaxll_gnl_error_cb, &fake_mch);
-	nl_recvmsgs_default(wmx->nlh_tx);
+	
+	do
+		result = nl_recvmsgs(wmx->nlh_tx, cb);
+	while (fake_mch.msg_done == 0 && result >= 0);
+	result = fake_mch.result;
+	nl_cb_set(cb, NL_CB_ACK, NL_CB_CUSTOM, NL_CB_DEFAULT, NULL);
+	nl_cb_set(cb, NL_CB_VALID, NL_CB_CUSTOM, NL_CB_DEFAULT, NULL);
+	nl_cb_err(cb, NL_CB_CUSTOM, NL_CB_DEFAULT, NULL);
 	nl_cb_put(cb);
 
 	result = fake_mch.result;

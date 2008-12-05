@@ -323,6 +323,7 @@ int wimaxll_mc_rx_open(struct wimaxll_handle *wmx,
 		goto error_cb_alloc;
 	}
 
+	nl_cb_set(mch->nl_cb, NL_CB_ACK, NL_CB_CUSTOM, wimaxll_gnl_ack_cb, mch);
 	nl_cb_set(mch->nl_cb, NL_CB_SEQ_CHECK, NL_CB_CUSTOM,
 		  wimaxll_seq_check_cb, NULL);
 	nl_cb_set(mch->nl_cb, NL_CB_VALID, NL_CB_CUSTOM, wimaxll_gnl_cb, mch);
@@ -503,23 +504,22 @@ ssize_t wimaxll_mc_rx_read(struct wimaxll_handle *wmx, unsigned index)
 	 * libnl's nl_recvmsgs() will read and call the different
 	 * callbacks we specified at wimaxll_mc_rx_open() time. That's
 	 * where the processing of the message content is done.
+	 *
+	 * Now, messages from the kernel don't carry ACKs or NLERRs,
+	 * so we are just receiving a message packet all the
+	 * time--except if things go wrong. 
 	 */
 	mch->result = -EINPROGRESS;
+	mch->msg_done = 0;
+	d_printf(2, wmx, "I: Calling nl_recvmsgs()\n");
 	result = nl_recvmsgs(mch->nlh_rx, mch->nl_cb);
-	if (result < 0) {
+	if (result < 0)
 		wimaxll_msg(wmx, "E: %s: nl_recvmgsgs failed: %d\n",
-			  __func__, result);
-		goto error_nl_recvmsgs;
-	}
-	result = mch->result;
-	if (result == -EINPROGRESS) {
-		wimaxll_msg(wmx, "E: %s: no messages parsed\n", __func__);
-		goto error_data;
-	}
+			    __func__, result);
+	else
+		result = mch->result;
 	/* No complains on error; the kernel might just be sending an
 	 * error out; pass it through. */
-error_data:
-error_nl_recvmsgs:
 error_not_open:
 error_bad_index:
 	d_fnend(3, wmx, "(wmx %p index %u) = %zd\n", wmx, index, result);

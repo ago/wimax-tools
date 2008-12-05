@@ -112,7 +112,6 @@ int wimaxll_reset(struct wimaxll_handle *wmx)
 	}
 	/* Read the message ACK from netlink */
 	result = wimaxll_wait_for_rp_result(wmx);
-	nl_wait_for_ack(wmx->nlh_tx);
 	if (result < 0)
 		wimaxll_msg(wmx, "E: RESET: operation failed: %zd\n", result);
 error_msg_prep:
