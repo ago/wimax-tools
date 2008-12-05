@@ -37,6 +37,8 @@
 #ifndef __lib_internal_h__
 #define __lib_internal_h__
 
+#include <wimaxll.h>
+
 enum {
 #define __WIMAXLL_IFNAME_LEN 32
 	/**
@@ -104,7 +106,7 @@ struct wimaxll_handle {
 	unsigned ifidx;
 	struct nl_handle *nlh_tx;
 	int gnl_family_id;
-	unsigned mc_msg;
+	unsigned mc_msg, mc_n;
 	char name[__WIMAXLL_IFNAME_LEN];
 	struct wimaxll_mc_group gnl_mc[WIMAXLL_MC_MAX];
 };
@@ -190,5 +192,12 @@ int wimaxll_family_id(struct wimaxll_handle *wmx)
 
 void wimaxll_msg(struct wimaxll_handle *, const char *fmt, ...)
 	__attribute__ ((format(printf, 2, 3)));
+
+/* Generic Netlink utilities */
+
+int nl_get_multicast_groups(struct nl_handle *, const char *,
+			    void (*cb)(void *, const char *, int),
+			    void *);
+int genl_ctrl_get_version(struct nl_handle *, const char *);
 
 #endif /* #ifndef __lib_internal_h__ */

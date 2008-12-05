@@ -9,6 +9,7 @@ noinst_HEADERS = debug.h internal.h
 lib_LTLIBRARIES = libwimaxll.la
 lib_LIBRARIES = libwimaxll.a
 libwimaxll_sources = 		\
+	genl.c			\
 	op-open.c		\
         op-msg.c		\
         op-reset.c		\

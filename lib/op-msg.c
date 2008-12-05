@@ -227,8 +227,7 @@ int wimaxll_gnl_handle_msg_to_user(struct wimaxll_handle *wmx,
 		goto error_no_attrs;
 
 	}
-	result = (ssize_t) nla_get_u64(tb[WIMAX_GNL_RESULT_CODE]);
-	wimaxll_cb_context_set_result(ctx, result);
+	wimaxll_cb_context_set_result(ctx, 0);
 
 	size = nla_len(tb[WIMAX_GNL_MSG_DATA]);
 	data = nla_data(tb[WIMAX_GNL_MSG_DATA]);
