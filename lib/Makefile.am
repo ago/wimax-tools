@@ -28,11 +28,3 @@ libwimaxll_la_CFLAGS = $(AM_CFLAGS)
 # AGE: inc for removed/changed existing interfaces
 libwimaxll_la_LDFLAGS = -version-info 0:0:0 $(LIBNL1_LIBS)
 libwimaxll_a_SOURCES = $(libwimaxll_sources)
-
-# Workaround renaming of libwimax to libwimaxll
-#
-# Dirty, but works the best -- will be removed soon
-install-exec-local:
-	$(mkdir_p) $(DESTDIR)/$(libdir)
-	(cd $(DESTDIR)/$(libdir) && ln -sf libwimaxll.so.0 libwimax.so.0)
-	(cd $(DESTDIR)/$(libdir) && ln -sf libwimaxll.so libwimax.so)

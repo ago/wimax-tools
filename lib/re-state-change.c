@@ -308,10 +308,3 @@ ssize_t wimaxll_wait_for_state_change(struct wimaxll_handle *wmx,
 		wmx, old_state, *old_state, new_state, *new_state);
 	return result;
 }
-
-void wimax_get_cb_state_change()
-	__attribute__ ((weak, alias("wimaxll_get_cb_state_change")));
-void wimax_set_cb_state_change()
-	__attribute__ ((weak, alias("wimaxll_set_cb_state_change")));
-void wimax_wait_for_state_change()
-	__attribute__ ((weak, alias("wimaxll_wait_for_state_change")));

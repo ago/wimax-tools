@@ -1,3 +1,0 @@
-/* This library is deprecated!!!!
-   In the meantime, do binary compat using aliases.  */
-GROUP ( @libdir@/libwimaxll.so )

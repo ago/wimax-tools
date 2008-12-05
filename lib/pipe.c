@@ -188,9 +188,3 @@ void wimaxll_pipe_close(struct wimaxll_handle *wmx, unsigned pipe_id)
 {
 	wimaxll_mc_rx_close(wmx, pipe_id);
 }
-
-
-void wimax_pipe_open() __attribute__ ((weak, alias("wimaxll_pipe_open")));
-void wimax_pipe_fd() __attribute__ ((weak, alias("wimaxll_pipe_fd")));
-void wimax_pipe_read() __attribute__ ((weak, alias("wimaxll_pipe_read")));
-void wimax_pipe_close() __attribute__ ((weak, alias("wimaxll_pipe_close")));

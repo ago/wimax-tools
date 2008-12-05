@@ -321,5 +321,3 @@ const char *wimaxll_ifname(const struct wimaxll_handle *wmx)
 {
 	return wmx->name;
 }
-
-void wimax_ifname() __attribute__ ((weak, alias("wimaxll_ifname")));

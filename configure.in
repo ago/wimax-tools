@@ -121,14 +121,11 @@ AC_SUBST(I2400M_INCLUDES,"-I${I2400M}/include")
 AC_OUTPUT(Makefile
           doc/Makefile
           doc/doxygen.conf
-          libwimax-0.pc
           libwimaxll-0.pc
-          libwimax-0-uninstalled.pc
           libwimaxll-0-uninstalled.pc
           bin/Makefile
           bin/wimax-tools-version
           include/Makefile
-          include/wimax-version.h
           include/wimaxll-version.h
           lib/Makefile
           src/Makefile)

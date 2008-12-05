@@ -266,6 +266,3 @@ void wimaxll_close(struct wimaxll_handle *wmx)
 	wimaxll_free(wmx);
 	d_fnend(3, NULL, "(wmx %p) = void\n", wmx);
 }
-
-void wimax_open() __attribute__ ((weak, alias("wimaxll_open")));
-void wimax_close() __attribute__ ((weak, alias("wimaxll_close")));

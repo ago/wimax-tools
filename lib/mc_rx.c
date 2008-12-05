@@ -525,8 +525,3 @@ error_bad_index:
 	d_fnend(3, wmx, "(wmx %p index %u) = %zd\n", wmx, index, result);
 	return result;
 }
-
-void wimax_mc_rx_open() __attribute__ ((weak, alias("wimaxll_mc_rx_open")));
-void wimax_mc_rx_fd() __attribute__ ((weak, alias("wimaxll_mc_rx_fd")));
-void wimax_mc_rx_close() __attribute__ ((weak, alias("wimaxll_mc_rx_close")));
-void wimax_mc_rx_read() __attribute__ ((weak, alias("wimaxll_mc_rx_read")));

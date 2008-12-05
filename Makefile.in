@@ -34,9 +34,7 @@ build_triplet = @build@
 host_triplet = @host@
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
-	$(srcdir)/Makefile.in $(srcdir)/libwimax-0-uninstalled.pc.in \
-	$(srcdir)/libwimax-0.pc.in \
-	$(srcdir)/libwimaxll-0-uninstalled.pc.in \
+	$(srcdir)/Makefile.in $(srcdir)/libwimaxll-0-uninstalled.pc.in \
 	$(srcdir)/libwimaxll-0.pc.in $(top_srcdir)/configure INSTALL \
 	config.guess config.sub depcomp install-sh ltmain.sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -47,8 +45,7 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/lib/config.h
-CONFIG_CLEAN_FILES = libwimax-0.pc libwimaxll-0.pc \
-	libwimax-0-uninstalled.pc libwimaxll-0-uninstalled.pc
+CONFIG_CLEAN_FILES = libwimaxll-0.pc libwimaxll-0-uninstalled.pc
 SOURCES =
 DIST_SOURCES =
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
@@ -199,7 +196,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 pkgconfigdir = ${libdir}/pkgconfig
 SUBDIRS = include lib src bin doc
-pkgconfig_DATA = libwimaxll-0.pc libwimax-0.pc
+pkgconfig_DATA = libwimaxll-0.pc
 MAINTAINERCLEANFILES = Makefile.in \
 	aclocal.m4 configure config.h.in config.sub config.guess \
 	ltmain.sh depcomp missing install-sh mkinstalldirs
@@ -240,11 +237,7 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 	cd $(srcdir) && $(AUTOCONF)
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
-libwimax-0.pc: $(top_builddir)/config.status $(srcdir)/libwimax-0.pc.in
-	cd $(top_builddir) && $(SHELL) ./config.status $@
 libwimaxll-0.pc: $(top_builddir)/config.status $(srcdir)/libwimaxll-0.pc.in
-	cd $(top_builddir) && $(SHELL) ./config.status $@
-libwimax-0-uninstalled.pc: $(top_builddir)/config.status $(srcdir)/libwimax-0-uninstalled.pc.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 libwimaxll-0-uninstalled.pc: $(top_builddir)/config.status $(srcdir)/libwimaxll-0-uninstalled.pc.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@

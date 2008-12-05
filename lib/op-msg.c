@@ -547,18 +547,3 @@ void wimaxll_pipe_set_cb_msg_to_user(
 		mch->msg_to_user_context = context;
 	}
 }
-
-
-void wimax_msg_fd() __attribute__ ((weak, alias("wimaxll_msg_fd")));
-void wimax_msg_read() __attribute__ ((weak, alias("wimaxll_msg_read")));
-void wimax_msg_write() __attribute__ ((weak, alias("wimaxll_msg_write")));
-void wimax_msg_free() __attribute__ ((weak, alias("wimaxll_msg_free")));
-void wimax_msg_pipe_id() __attribute__ ((weak, alias("wimaxll_msg_pipe_id")));
-void wimax_pipe_msg_read()
-	__attribute__ ((weak, alias("wimaxll_pipe_msg_read")));
-void wimax_pipe_msg_free()
-	__attribute__ ((weak, alias("wimaxll_pipe_msg_free")));
-void wimax_pipe_get_cb_msg_to_user()
-	__attribute__ ((weak, alias("wimaxll_pipe_get_cb_msg_to_user")));
-void wimax_pipe_set_cb_msg_to_user()
-	__attribute__ ((weak, alias("wimaxll_pipe_set_cb_msg_to_user")));

@@ -1,2 +1,0 @@
-#warning DEPRECATED: this file is deprecated, use wimaxll-version.h
-#define WIMAX_VERSION "@PACKAGE_VERSION@"
