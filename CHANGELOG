@@ -1,0 +1,8 @@
+Changes in v1.3.96:
+
+ - Use the netlink controller for gaining multicast groups knowledge.
+
+ - Fix handling of ack/nlerr -- we don't need RP_RESULT anymore.
+
+ - Remove deprecated libwimax interface, all clients should have moved
+   to libwimaxll.
