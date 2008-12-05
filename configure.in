@@ -1,5 +1,5 @@
 AC_PREREQ(2.50)
-AC_INIT([WiMAX low level tools], [1.3.95],
+AC_INIT([WiMAX low level tools], [1.3.96],
         [linux-wimax@intel.com], [wimax-tools])
 AC_CONFIG_SRCDIR([lib/internal.h])
 AM_INIT_AUTOMAKE
