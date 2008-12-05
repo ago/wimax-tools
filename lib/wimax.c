@@ -101,7 +101,6 @@ int wimaxll_gnl_error_cb(struct sockaddr_nl *nla, struct nlmsgerr *nlerr,
  *
  * Frontend to this is wimaxll_wait_for_ack()
  */
-static
 int wimaxll_gnl_ack_cb(struct nl_msg *msg, void *_mch)
 {
 	int result;
@@ -110,6 +109,7 @@ int wimaxll_gnl_ack_cb(struct nl_msg *msg, void *_mch)
 	size_t size = nlmsg_len(nlmsg_hdr(msg));
 	struct wimaxll_mc_handle *mch = _mch;
 
+	d_fnstart(7, NULL, "(msg %p mch %p)\n", msg, _mch);
 	nl_hdr = nlmsg_hdr(msg);
 	size = nlmsg_len(nl_hdr);
 	nl_err = nlmsg_data(nl_hdr);
@@ -142,6 +142,7 @@ int wimaxll_gnl_ack_cb(struct nl_msg *msg, void *_mch)
 			  nl_err->error);
 error_ack_short:
 error_bad_type:
+	d_fnend(7, NULL, "(msg %p mch %p) = NL_STOP\n", msg, _mch);
 	return NL_STOP;
 }
 

@@ -88,6 +88,7 @@ int wimaxll_reset(struct wimaxll_handle *wmx)
 	ssize_t result;
 	struct nl_msg *msg;
 
+	d_fnstart(3, wmx, "(wmx %p)\n", wmx);
 	msg = nlmsg_new();
 	if (msg == NULL) {
 		result = errno;
@@ -118,5 +119,6 @@ error_msg_prep:
 error_msg_send:
 	nlmsg_free(msg);
 error_msg_alloc:
+	d_fnend(3, wmx, "(wmx %p) = %d\n", wmx, result);
 	return result;
 }

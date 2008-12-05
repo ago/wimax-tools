@@ -94,6 +94,7 @@ int wimaxll_rfkill(struct wimaxll_handle *wmx, enum wimax_rf_state state)
 	ssize_t result;
 	struct nl_msg *msg;
 
+	d_fnstart(3, wmx, "(wmx %p state %u)\n", wmx, state);
 	msg = nlmsg_new();
 	if (msg == NULL) {
 		result = errno;
@@ -125,5 +126,6 @@ error_msg_prep:
 error_msg_send:
 	nlmsg_free(msg);
 error_msg_alloc:
+	d_fnend(3, wmx, "(wmx %p state %u) = %d\n", wmx, state, result);
 	return result;
 }
