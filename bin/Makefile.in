@@ -271,13 +271,13 @@ clean-binPROGRAMS:
 	  echo " rm -f $$p $$f"; \
 	  rm -f $$p $$f ; \
 	done
-wimaxll-reset$(EXEEXT): $(wimaxll_reset_OBJECTS) $(wimaxll_reset_DEPENDENCIES) 
+wimaxll-reset$(EXEEXT): $(wimaxll_reset_OBJECTS) $(wimaxll_reset_DEPENDENCIES)
 	@rm -f wimaxll-reset$(EXEEXT)
 	$(LINK) $(wimaxll_reset_OBJECTS) $(wimaxll_reset_LDADD) $(LIBS)
-wimaxll-rfkill$(EXEEXT): $(wimaxll_rfkill_OBJECTS) $(wimaxll_rfkill_DEPENDENCIES) 
+wimaxll-rfkill$(EXEEXT): $(wimaxll_rfkill_OBJECTS) $(wimaxll_rfkill_DEPENDENCIES)
 	@rm -f wimaxll-rfkill$(EXEEXT)
 	$(LINK) $(wimaxll_rfkill_OBJECTS) $(wimaxll_rfkill_LDADD) $(LIBS)
-wimaxll-wait-for-state-change$(EXEEXT): $(wimaxll_wait_for_state_change_OBJECTS) $(wimaxll_wait_for_state_change_DEPENDENCIES) 
+wimaxll-wait-for-state-change$(EXEEXT): $(wimaxll_wait_for_state_change_OBJECTS) $(wimaxll_wait_for_state_change_DEPENDENCIES)
 	@rm -f wimaxll-wait-for-state-change$(EXEEXT)
 	$(LINK) $(wimaxll_wait_for_state_change_OBJECTS) $(wimaxll_wait_for_state_change_LDADD) $(LIBS)
 install-binSCRIPTS: $(bin_SCRIPTS)

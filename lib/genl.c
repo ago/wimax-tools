@@ -2,37 +2,37 @@
  * Heavily based on code from iw-0.9.6 by Johannes berg
  *
  * -- Original license & header --
- * 
+ *
  * Copyright (c) 2007, 2008	Johannes Berg
  * Copyright (c) 2007		Andy Lutomirski
  * Copyright (c) 2007		Mike Kershaw
  * Copyright (c) 2008		Luis R. Rodriguez
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
  * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
  * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, 
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * This ought to be provided by libnl
  *
  * -- End of original license & header --
@@ -41,7 +41,7 @@
 #include <asm/errno.h>
 #include <netlink/genl/genl.h>
 #include <netlink/genl/family.h>
-#include <netlink/genl/ctrl.h>  
+#include <netlink/genl/ctrl.h>
 #include <netlink/msg.h>
 #include <netlink/attr.h>
 #include "internal.h"
@@ -83,12 +83,12 @@ static int family_handler(struct nl_msg *msg, void *_arg)
 	nla_parse(tb, CTRL_ATTR_MAX, genlmsg_attrdata(gnlh, 0),
 		  genlmsg_attrlen(gnlh, 0), NULL);
 
-        if (!tb[CTRL_ATTR_MCAST_GROUPS])
+	if (!tb[CTRL_ATTR_MCAST_GROUPS])
 		return NL_SKIP;
 
 	nla_for_each_nested(mcgrp, tb[CTRL_ATTR_MCAST_GROUPS], rem_mcgrp) {
 		struct nlattr *tb_mcgrp[CTRL_ATTR_MCAST_GRP_MAX + 1];
-		
+
 		nla_parse(tb_mcgrp, CTRL_ATTR_MCAST_GRP_MAX,
 			  nla_data(mcgrp), nla_len(mcgrp), NULL);
 
@@ -98,7 +98,7 @@ static int family_handler(struct nl_msg *msg, void *_arg)
 		arg->cb(arg->priv,
 			nla_data(tb_mcgrp[CTRL_ATTR_MCAST_GRP_NAME]),
 			nla_get_u32(tb_mcgrp[CTRL_ATTR_MCAST_GRP_ID]));
-	}	
+	}
 	return NL_OK;
 }
 
@@ -109,9 +109,9 @@ static int family_handler(struct nl_msg *msg, void *_arg)
  * @family: name of family to query for multicast groups
  * @cb: callback function to call with each multicast group's information.
  * @priv: pointer to pass to the callback function
- * 
+ *
  * Returns: 0 if ok, < 0 errno code on error.
- * 
+ *
  * Enumerates the multicast groups available for a generic netlink
  * family and calls the callback with the arguments of each.
  */
@@ -127,7 +127,7 @@ int nl_get_multicast_groups(struct nl_handle *handle,
 		.priv = priv,
 		.cb = cbf
 	};
-	
+
 	msg = nlmsg_alloc();
 	if (!msg)
 		return -ENOMEM;
@@ -140,7 +140,7 @@ int nl_get_multicast_groups(struct nl_handle *handle,
 
 	ctrlid = genl_ctrl_resolve(handle, "nlctrl");
 
-        genlmsg_put(msg, 0, 0, ctrlid, 0,
+	genlmsg_put(msg, 0, 0, ctrlid, 0,
 		    0, CTRL_CMD_GETFAMILY, 0);
 
 	ret = -ENOBUFS;

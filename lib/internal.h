@@ -86,7 +86,7 @@ struct wimaxll_mc_group {
  *
  * FIXME: this needs some rewriting
  *
- * \param ifidx Interface Index 
+ * \param ifidx Interface Index
  * \param nlh_tx handle for writing to the kernel.
  *     Internal note: You \b have \b to set the handlers for
  *     %NL_CB_VALID and nl_cb_err() callbacks, as each callsite will
@@ -139,7 +139,7 @@ struct wimaxll_mc_handle {
 	struct nl_cb *nl_cb;
 	ssize_t result;
 	unsigned msg_done:1;		/* internal */
-	
+
 	wimaxll_msg_to_user_cb_f msg_to_user_cb;
 	struct wimaxll_gnl_cb_context *msg_to_user_context;
 

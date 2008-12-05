@@ -99,7 +99,7 @@ int wimaxll_gnl_resolve(struct wimaxll_handle *wmx)
 	int result, version;
 	char buf[64];
 	unsigned major, minor;
-	
+
 	d_fnstart(5, wmx, "(wmx %p)\n", wmx);
 	/* Lookup the generic netlink family */
 	wmx->ifidx = if_nametoindex(wmx->name);

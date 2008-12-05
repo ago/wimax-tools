@@ -507,7 +507,7 @@ ssize_t wimaxll_mc_rx_read(struct wimaxll_handle *wmx, unsigned index)
 	 *
 	 * Now, messages from the kernel don't carry ACKs or NLERRs,
 	 * so we are just receiving a message packet all the
-	 * time--except if things go wrong. 
+	 * time--except if things go wrong.
 	 */
 	mch->result = -EINPROGRESS;
 	mch->msg_done = 0;
