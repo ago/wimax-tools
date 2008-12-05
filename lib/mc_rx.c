@@ -213,9 +213,6 @@ int wimaxll_gnl_cb(struct nl_msg *msg, void *_mch)
 	nl_hdr = nlmsg_hdr(msg);
 	gnl_hdr = nlmsg_data(nl_hdr);
 
-	if (gnl_hdr->cmd >= WIMAX_GNL_OP_MAX)
-		goto error_unknown_msg;
-
 	switch (gnl_hdr->cmd) {
 	case WIMAX_GNL_OP_MSG_TO_USER:
 		if (mch->msg_to_user_cb)
