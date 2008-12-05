@@ -240,8 +240,64 @@ int wimaxll_gnl_rp_ifinfo_error_cb(struct sockaddr_nl *nla,
 		  nla, nlerr, nlerr->error, _ctx);
 	if (ctx->gnl.result == -EINPROGRESS)
 		ctx->gnl.result = nlerr->error;
-	d_fnend(7, wmx, "(nla %p nlnerr %p [%d] ctx %p) = %d\n",
-		nla, nlerr, nlerr->error, _ctx, NL_STOP);
+	ctx->gnl.msg_done = 1;
+	d_fnend(7, wmx, "(nla %p nlnerr %p [%d] ctx %p) = NL_STOP\n",
+		nla, nlerr, nlerr->error, _ctx);
+	return NL_STOP;
+}
+
+
+static
+int wimaxll_gnl_rp_ifinfo_ack_cb(struct nl_msg *msg, void *_ctx)
+{
+	int result;
+	struct nlmsghdr *nl_hdr;
+	struct nlmsgerr *nl_err;
+	size_t size = nlmsg_len(nlmsg_hdr(msg));
+	struct wimaxll_ifinfo_context *ctx = _ctx;
+
+	d_fnstart(7, NULL, "(msg %p ctx %p)\n", msg, ctx);
+	nl_hdr = nlmsg_hdr(msg);
+	size = nlmsg_len(nl_hdr);
+	nl_err = nlmsg_data(nl_hdr);
+
+	if (size < sizeof(*nl_err)) {
+		wimaxll_msg(NULL, "E: netlink ack: buffer too small "
+			  "(%zu vs %zu expected)\n",
+			  size, sizeof(*nl_hdr) + sizeof(*nl_err));
+		result = -EIO;
+		goto error_ack_short;
+	}
+	d_printf(4, NULL, "netlink ack: nlmsghdr len %u type %u flags 0x%04x "
+		 "seq 0x%x pid %u\n", nl_hdr->nlmsg_len, nl_hdr->nlmsg_type,
+		 nl_hdr->nlmsg_flags, nl_hdr->nlmsg_seq, nl_hdr->nlmsg_pid);
+	if (nl_hdr->nlmsg_type != NLMSG_ERROR) {
+		wimaxll_msg(NULL, "E: netlink ack: message is not an ack but "
+			  "type %u\n", nl_hdr->nlmsg_type);
+		result = -EBADE;
+		goto error_bad_type;
+	}
+	d_printf(4, NULL, "netlink ack: nlmsgerr error %d for "
+		 "nlmsghdr len %u type %u flags 0x%04x seq 0x%x pid %u\n",
+		 nl_err->error,
+		 nl_err->msg.nlmsg_len, nl_err->msg.nlmsg_type,
+		 nl_err->msg.nlmsg_flags, nl_err->msg.nlmsg_seq,
+		 nl_err->msg.nlmsg_pid);
+	if (ctx->gnl.result == -EINPROGRESS) {
+		ctx->gnl.result = nl_err->error;
+		d_printf(4, NULL, "netlink ack: updating gnl.result\n");
+	}
+	else
+		d_printf(4, NULL, "netlink ack: Not updating gnl.result (%d)\n",
+			 ctx->gnl.result);
+	
+	if (nl_err->error < 0)
+		d_printf(2, NULL, "D: netlink ack: received netlink error %d\n",
+			  nl_err->error);
+	ctx->gnl.msg_done = 1;
+error_ack_short:
+error_bad_type:
+	d_fnend(7, NULL, "(msg %p ctx %p) = NL_STOP\n", msg, ctx);
 	return NL_STOP;
 }
 
@@ -368,22 +424,30 @@ int __wimaxll_cmd_open(struct wimaxll_handle *wmx)
 	 */
 	ctx.gnl.wmx = wmx;
 	ctx.gnl.result = -EINPROGRESS;
+	ctx.gnl.msg_done = 0;
 	cb = nl_socket_get_cb(wmx->nlh_tx);
 	nl_cb_set(cb, NL_CB_VALID, NL_CB_CUSTOM,
 		  wimaxll_gnl_rp_ifinfo_cb, &ctx);
+	nl_cb_set(cb, NL_CB_ACK, NL_CB_CUSTOM,
+		  wimaxll_gnl_rp_ifinfo_ack_cb, &ctx);
 	nl_cb_err(cb, NL_CB_CUSTOM, wimaxll_gnl_rp_ifinfo_error_cb, &ctx.gnl);
-	nl_recvmsgs_default(wmx->nlh_tx);
-	nl_cb_put(cb);
+	do
+		result = nl_recvmsgs(wmx->nlh_tx, cb);
+	while (ctx.gnl.msg_done == 0 && result >= 0);
 	result = ctx.gnl.result;
-	if (result >= 0)
-		nl_wait_for_ack(wmx->nlh_tx);
+	nl_cb_set(cb, NL_CB_ACK, NL_CB_CUSTOM, NL_CB_DEFAULT, NULL);
+	nl_cb_set(cb, NL_CB_VALID, NL_CB_CUSTOM, NL_CB_DEFAULT, NULL);
+	nl_cb_err(cb, NL_CB_CUSTOM, NL_CB_DEFAULT, NULL);
+	nl_cb_put(cb);
 	if (result == -EINPROGRESS)
 		wimaxll_msg(wmx, "E: %s: the kernel didn't reply with a "
 			  "WIMAX_GNL_RP_IFINFO message\n", __func__);
-	d_printf(1, wmx, "D: processing result is %d\n", result);
-
-	/* All fine and dandy, commit the data */
-	memcpy(wmx->gnl_mc, ctx.gnl_mc, sizeof(ctx.gnl_mc));
+	else if (result >= 0) {
+		d_printf(1, wmx, "D: processing result is %d\n", result);
+		/* All fine and dandy, commit the data */
+		memcpy(wmx->gnl_mc, ctx.gnl_mc, sizeof(ctx.gnl_mc));
+	} else
+		d_printf(1, wmx, "E: rp_ifinfo failed %d\n", result);
 error_msg_prep:
 error_msg_send:
 	nlmsg_free(msg);

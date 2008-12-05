@@ -319,6 +319,8 @@ typedef int (*wimaxll_state_change_cb_f)(
 /**
  * General structure for storing callback context
  *
+ * \ingroup callbacks
+ *
  * Callbacks set by the user receive a user-set pointer to a context
  * structure. The user can wrap this struct in a bigger context struct
  * and use wimaxll_container_of() during the callback to obtain its
@@ -360,11 +362,16 @@ typedef int (*wimaxll_state_change_cb_f)(
  *     be interpreted by the message handler as no processing was done
  *     on the message.
  *
- * \ingroup callbacks
+ * \internal
+ *
+ * \param msg_done This is used internally to mark when the acks (or
+ *     errors) for a message have been received and the message
+ *     receiving loop can be considered done.
  */
 struct wimaxll_gnl_cb_context {
 	struct wimaxll_handle *wmx;
 	ssize_t result;
+	unsigned msg_done:1;	/* internal */
 };
 
 
