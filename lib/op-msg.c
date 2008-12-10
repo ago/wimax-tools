@@ -191,8 +191,8 @@ int wimaxll_gnl_handle_msg_to_user(struct wimaxll_handle *wmx,
 
 	}
 	if (wmx->ifidx != nla_get_u32(tb[WIMAX_GNL_MSG_IFIDX])) {
-		result = NL_OK;
-		goto error_not_for_us;
+		result = NL_SKIP;
+		goto error_no_attrs;
 	}
 	/* Extract marshalled arguments */
 	if (tb[WIMAX_GNL_MSG_DATA] == NULL) {
