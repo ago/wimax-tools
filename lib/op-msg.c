@@ -245,10 +245,10 @@ struct wimaxll_cb_msg_to_user_context {
  * pass that pointer to the caller along with the size.
  */
 static
-int wimaxll_cb_msg_to_user(struct wimaxll_handle *wmx,
-			   struct wimaxll_gnl_cb_context *ctx,
-			   const char *pipe_name,
-			   const void *data, size_t data_size)
+int wimaxll_msg_read_cb(struct wimaxll_handle *wmx,
+			struct wimaxll_gnl_cb_context *ctx,
+			const char *pipe_name,
+			const void *data, size_t data_size)
 {
 	int result;
 	struct wimaxll_cb_msg_to_user_context *mtu_ctx =
@@ -348,7 +348,7 @@ ssize_t wimaxll_msg_read(struct wimaxll_handle *wmx,
 	d_fnstart(3, wmx, "(wmx %p pipe_name %s, buf %p)\n",
 		  wmx, pipe_name, buf);
 	wimaxll_get_cb_msg_to_user(wmx, &prev_cb, &prev_priv);
-	wimaxll_set_cb_msg_to_user(wmx, wimaxll_cb_msg_to_user,
+	wimaxll_set_cb_msg_to_user(wmx, wimaxll_msg_read_cb,
 				   &mtu_ctx.ctx);
 	do {
 		/* Loop until we get a message in the desired pipe */
