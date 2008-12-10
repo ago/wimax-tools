@@ -60,7 +60,7 @@
  *
  * \param nla Source netlink address
  * \param nlerr Netlink error descritor
- * \param _mch Pointer to (\a struct wimaxll_mc_handle)
+ * \param _ctx Pointer to (\a struct wimaxll_gnl_cb_context)
  *
  * \return 'enum nl_cb_action', NL_OK if there is no error, NL_STOP on
  *     error and _mch->result possibly updated.
@@ -70,17 +70,17 @@
  * store the result of an error message from the kernel.
  */
 int wimaxll_gnl_error_cb(struct sockaddr_nl *nla, struct nlmsgerr *nlerr,
-		       void *_mch)
+			 void *_ctx)
 {
-	struct wimaxll_mc_handle *mch = _mch;
-	struct wimaxll_handle *wmx = mch->wmx;
+	struct wimaxll_gnl_cb_context *ctx = _ctx;
+	struct wimaxll_handle *wmx = ctx->wmx;
 
-	d_fnstart(7, wmx, "(nla %p nlnerr %p [%d] mch %p)\n",
-		  nla, nlerr, nlerr->error, _mch);
-	wimaxll_mch_maybe_set_result(mch, nlerr->error);
-	mch->msg_done = 1;
-	d_fnend(7, wmx, "(nla %p nlnerr %p [%d] mch %p) = NL_STOP\n",
-		nla, nlerr, nlerr->error, _mch);
+	d_fnstart(3, wmx, "(nla %p nlnerr %p [%d] ctx %p)\n",
+		  nla, nlerr, nlerr->error, _ctx);
+	wimaxll_cb_maybe_set_result(ctx, nlerr->error);
+	ctx->msg_done = 1;
+	d_fnend(3, wmx, "(nla %p nlnerr %p [%d] ctx %p) = NL_STOP\n",
+		nla, nlerr, nlerr->error, _ctx);
 	return NL_STOP;
 }
 
@@ -102,15 +102,15 @@ int wimaxll_gnl_error_cb(struct sockaddr_nl *nla, struct nlmsgerr *nlerr,
  *
  * Frontend to this is wimaxll_wait_for_ack()
  */
-int wimaxll_gnl_ack_cb(struct nl_msg *msg, void *_mch)
+int wimaxll_gnl_ack_cb(struct nl_msg *msg, void *_ctx)
 {
 	int result;
 	struct nlmsghdr *nl_hdr;
 	struct nlmsgerr *nl_err;
 	size_t size = nlmsg_len(nlmsg_hdr(msg));
-	struct wimaxll_mc_handle *mch = _mch;
+	struct wimaxll_gnl_cb_context *ctx = _ctx;
 
-	d_fnstart(7, NULL, "(msg %p mch %p)\n", msg, _mch);
+	d_fnstart(7, NULL, "(msg %p ctx %p)\n", msg, _ctx);
 	nl_hdr = nlmsg_hdr(msg);
 	size = nlmsg_len(nl_hdr);
 	nl_err = nlmsg_data(nl_hdr);
@@ -131,20 +131,20 @@ int wimaxll_gnl_ack_cb(struct nl_msg *msg, void *_mch)
 		result = -EBADE;
 		goto error_bad_type;
 	}
-	d_printf(4, NULL, "netlink ack: nlmsgerr error %d for "
+	d_printf(3, NULL, "netlink ack: nlmsgerr error %d for "
 		 "nlmsghdr len %u type %u flags 0x%04x seq 0x%x pid %u\n",
 		 nl_err->error,
 		 nl_err->msg.nlmsg_len, nl_err->msg.nlmsg_type,
 		 nl_err->msg.nlmsg_flags, nl_err->msg.nlmsg_seq,
 		 nl_err->msg.nlmsg_pid);
-	wimaxll_mch_maybe_set_result(mch, nl_err->error);
+	wimaxll_cb_maybe_set_result(ctx, nl_err->error);
 	if (nl_err->error < 0)
 		d_printf(2, NULL, "D: netlink ack: received netlink error %d\n",
 			  nl_err->error);
-	mch->msg_done = 1;
+	ctx->msg_done = 1;
 error_ack_short:
 error_bad_type:
-	d_fnend(7, NULL, "(msg %p mch %p) = NL_STOP\n", msg, _mch);
+	d_fnend(7, NULL, "(msg %p ctx %p) = NL_STOP\n", msg, _ctx);
 	return NL_STOP;
 }
 
@@ -166,20 +166,20 @@ int wimaxll_wait_for_ack(struct wimaxll_handle *wmx)
 {
 	int result;
 	struct nl_cb *cb;
-	struct wimaxll_mc_handle fake_mch;
+	struct wimaxll_gnl_cb_context ctx;
 
-	fake_mch.wmx = wmx;
-	fake_mch.result = -EINPROGRESS;
-	fake_mch.msg_done = 0;
+	ctx.wmx = wmx;
+	ctx.result = -EINPROGRESS;
+	ctx.msg_done = 0;
 
 	cb = nl_socket_get_cb(wmx->nlh_tx);
-	nl_cb_set(cb, NL_CB_ACK, NL_CB_CUSTOM, wimaxll_gnl_ack_cb, &fake_mch);
+	nl_cb_set(cb, NL_CB_ACK, NL_CB_CUSTOM, wimaxll_gnl_ack_cb, &ctx);
 	nl_cb_set(cb, NL_CB_VALID, NL_CB_CUSTOM, NL_CB_DEFAULT, NULL);
-	nl_cb_err(cb, NL_CB_CUSTOM, wimaxll_gnl_error_cb, &fake_mch);
+	nl_cb_err(cb, NL_CB_CUSTOM, wimaxll_gnl_error_cb, &ctx);
 	do
 		result = nl_recvmsgs(wmx->nlh_tx, cb);
-	while (fake_mch.msg_done == 0 && result >= 0);
-	result = fake_mch.result;
+	while (ctx.msg_done == 0 && result >= 0);
+	result = ctx.result;
 	nl_cb_set(cb, NL_CB_ACK, NL_CB_CUSTOM, NL_CB_DEFAULT, NULL);
 	nl_cb_set(cb, NL_CB_VALID, NL_CB_CUSTOM, NL_CB_DEFAULT, NULL);
 	nl_cb_err(cb, NL_CB_CUSTOM, NL_CB_DEFAULT, NULL);
@@ -187,7 +187,7 @@ int wimaxll_wait_for_ack(struct wimaxll_handle *wmx)
 	if (result < 0)
 		return result;
 	else
-		return fake_mch.result;
+		return ctx.result;
 }
 
 

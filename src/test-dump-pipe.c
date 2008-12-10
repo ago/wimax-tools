@@ -63,7 +63,6 @@ void dump(const void *_ptr, size_t size)
 int main(int argc, char **argv)
 {
 	ssize_t result;
-	unsigned pipe_id;
 	struct wimaxll_handle *wmx;
 	char *dev_name, *pipe_name;
 	void *buf;
@@ -84,16 +83,9 @@ int main(int argc, char **argv)
 	}
 
 	fprintf(stderr, "I: Reading from pipe %s\n", pipe_name);
-	result = wimaxll_pipe_open(wmx, pipe_name);
-	if (result < 0) {
-		fprintf(stderr, "E: cannot open pipe %s: %d\n",
-			pipe_name, result);
-		goto error_pipe_open;
-	}
-	pipe_id = result;
 
 	while (1) {
-		result = wimaxll_pipe_msg_read(wmx, pipe_id, &buf);
+		result = wimaxll_msg_read(wmx, pipe_name, &buf);
 		if (result < 0) {
 			fprintf(stderr, "E: reading from pipe %s failed: %d\n",
 				pipe_name, result);
@@ -102,11 +94,9 @@ int main(int argc, char **argv)
 		printf("I: message received from pipe %s, %zu bytes\n",
 		       pipe_name, result);
 		dump(buf, result);
-		wimaxll_pipe_msg_free(buf);
+		wimaxll_msg_free(buf);
 	}
-	wimaxll_pipe_close(wmx, pipe_id);
 	result = 0;
-error_pipe_open:
 	wimaxll_close(wmx);
 error_wimaxll_open:
 	return result;

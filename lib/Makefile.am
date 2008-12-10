@@ -14,8 +14,6 @@ libwimaxll_sources = 		\
         op-msg.c		\
         op-reset.c		\
         op-rfkill.c		\
-        mc_rx.c			\
-        pipe.c			\
         re-state-change.c	\
 	wimax.c
 
@@ -23,8 +21,9 @@ libwimaxll_la_SOURCES = $(libwimaxll_sources)
 # Trick automake
 libwimaxll_la_CFLAGS = $(AM_CFLAGS)
 # -version-info is CURRENT:REVISION:AGE
+# CURRENT: inc for added, removed/changed interfaces
 # REVISION: inc for changes that do not affect the external interface
-# CURRENT: inc for added interfaces
-# AGE: inc for removed/changed existing interfaces
-libwimaxll_la_LDFLAGS = -version-info 0:0:0 $(LIBNL1_LIBS)
+# AGE: inc for added interfaces
+#      set to zero if removed existing interfaces
+libwimaxll_la_LDFLAGS = -version-info 1:0:0 $(LIBNL1_LIBS)
 libwimaxll_a_SOURCES = $(libwimaxll_sources)

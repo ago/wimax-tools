@@ -46,28 +46,6 @@ enum {
 	 *     name.
 	 */
 	WIMAXLL_IFNAME_LEN = __WIMAXLL_IFNAME_LEN,
-	/**
-	 * WMAX_MC_MAX - Maximum number of multicast groups that a
-	 *     WiMAX interface can offer (this doesn't count the
-	 *     reports group, which is separate).
-	 */
-	WIMAXLL_MC_MAX = 5,
-};
-
-
-struct wimaxll_mc_handle;
-
-
-/**
- * A description of a generic netlink multicast group
- *
- * \param name Name of the group
- * \param id ID of the group
- */
-struct wimaxll_mc_group {
-	char name[GENL_NAMSIZ];
-	int id;
-	struct wimaxll_mc_handle *mch;
 };
 
 
@@ -79,66 +57,38 @@ struct wimaxll_mc_group {
  * \internal
  *
  * In order to simplify multithread support, we use to different \a
- * libnl handles, one for sending to the kernel, one (for each pipe
- * open to a multicast group) for reading from the kernel. This allows
- * us to parallelize \c wimaxll_msg_write() and \c wimaxll_msg_read() at
- * the same time in a multithreaded environment.
+ * libnl handles, one for sending to the kernel, one for receiving
+ * from the kernel (multicast group). This allows us to parallelize \c
+ * wimaxll_msg_write() and \c wimaxll_msg_read() at the same time in a
+ * multithreaded environment, for example.
  *
- * FIXME: this needs some rewriting
- *
- * \param ifidx Interface Index
+ * \param ifidx Interface Index (of the network interface)
+ * \param gnl_family_id Generic Netlink Family ID assigned to the
+ *     device; we maintain it here (for each interface) because we
+ *     want to discover it every time we open. This solves the case of
+ *     the WiMAX modules being reloaded (and the ID changing) while
+ *     this library is running; this way it takes only a new open when
+ *     the new device is discovered.
+ * \param mcg_id Id of the 'msg' multicast group
+ * \param name name of the wimax interface
  * \param nlh_tx handle for writing to the kernel.
  *     Internal note: You \b have \b to set the handlers for
  *     %NL_CB_VALID and nl_cb_err() callbacks, as each callsite will
  *     do it to suit their needs. See wimaxll_rfkill() for an
  *     example. Any other callback you are supposed to restore to what
  *     it was before.
- * \param gnl_family_id Generic Netlink Family ID assigned to the device
- * \param mc_msg Index in the \a gnl_mc array of the "msg"
- *     multicast group.
- * \param name name of the wimax interface
- * \param gnl_mc Array of information about the different multicast
- *     groups supported by the device. At least the "msg" group is
- *     always supported. The rest are optional and depend on what the
- *     driver implements.
+ * \param nlh_rx handle for reading from the kernel.
+ * \param nl_rx_cb Callbacks for the nlh_rx handle
+ *
+ * FIXME: add doc on callbacks
  */
 struct wimaxll_handle {
 	unsigned ifidx;
-	struct nl_handle *nlh_tx;
-	int gnl_family_id;
-	unsigned mc_msg, mc_n;
+	int gnl_family_id, mcg_id;
 	char name[__WIMAXLL_IFNAME_LEN];
-	struct wimaxll_mc_group gnl_mc[WIMAXLL_MC_MAX];
-};
 
-
-/**
- * Multicast group handle
- *
- * \internal
- *
- * This structure encapsulates all that we need to read from a single
- * multicast group. We could have a single handle for doing all, but
- * by definition of the interface, different multicast groups carry
- * different traffic (with different needs). Rather than multiplex it
- * here, we multiplex at the kernel by sending it via an specific pipe
- * that knows how to handle it already.
- *
- * This way the driver can define it's own private pipes (if needed)
- * for high bandwidth traffic (for example, tracing information)
- * without affecting the rest of the groups (channels).
- *
- * msg_done is used by the ack and error generic netlink callbacks to
- * indicate to the message receving loop that all the parts of the
- * message have been received.
- */
-struct wimaxll_mc_handle {
-	int idx;
-	struct wimaxll_handle *wmx;
+	struct nl_handle *nlh_tx;
 	struct nl_handle *nlh_rx;
-	struct nl_cb *nl_cb;
-	ssize_t result;
-	unsigned msg_done:1;		/* internal */
 
 	wimaxll_msg_to_user_cb_f msg_to_user_cb;
 	struct wimaxll_gnl_cb_context *msg_to_user_context;
@@ -148,26 +98,12 @@ struct wimaxll_mc_handle {
 };
 
 
-static inline
-void wimaxll_mch_maybe_set_result(struct wimaxll_mc_handle *mch, int val)
-{
-	if (mch->result == -EINPROGRESS)
-		mch->result = val;
-}
-
-
 /* Utilities */
 int wimaxll_wait_for_ack(struct wimaxll_handle *);
-int wimaxll_gnl_handle_msg_to_user(struct wimaxll_handle *,
-				 struct wimaxll_mc_handle *,
-				 struct nl_msg *);
-int wimaxll_gnl_handle_state_change(struct wimaxll_handle *,
-				  struct wimaxll_mc_handle *,
-				  struct nl_msg *);
+int wimaxll_gnl_handle_msg_to_user(struct wimaxll_handle *, struct nl_msg *);
+int wimaxll_gnl_handle_state_change(struct wimaxll_handle *, struct nl_msg *);
 int wimaxll_gnl_error_cb(struct sockaddr_nl *, struct nlmsgerr *, void *);
 int wimaxll_gnl_ack_cb(struct nl_msg *msg, void *_mch);
-struct wimaxll_mc_handle *__wimaxll_get_mc_handle(struct wimaxll_handle *,
-					      int pipe_id);
 
 
 #define wimaxll_container_of(pointer, type, member)			\

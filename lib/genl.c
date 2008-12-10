@@ -158,7 +158,7 @@ int nl_get_multicast_groups(struct nl_handle *handle,
 	nl_cb_set(cb, NL_CB_VALID, NL_CB_CUSTOM, family_handler, &arg);
 
 	while (ret > 0)
-		nl_recvmsgs(handle, cb);
+		ret = nl_recvmsgs(handle, cb);
  nla_put_failure:
  out:
 	nl_cb_put(cb);

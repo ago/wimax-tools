@@ -57,8 +57,8 @@ ARFLAGS = cru
 libwimaxll_a_AR = $(AR) $(ARFLAGS)
 libwimaxll_a_LIBADD =
 am__objects_1 = genl.$(OBJEXT) op-open.$(OBJEXT) op-msg.$(OBJEXT) \
-	op-reset.$(OBJEXT) op-rfkill.$(OBJEXT) mc_rx.$(OBJEXT) \
-	pipe.$(OBJEXT) re-state-change.$(OBJEXT) wimax.$(OBJEXT)
+	op-reset.$(OBJEXT) op-rfkill.$(OBJEXT) \
+	re-state-change.$(OBJEXT) wimax.$(OBJEXT)
 am_libwimaxll_a_OBJECTS = $(am__objects_1)
 libwimaxll_a_OBJECTS = $(am_libwimaxll_a_OBJECTS)
 libLTLIBRARIES_INSTALL = $(INSTALL)
@@ -66,8 +66,7 @@ LTLIBRARIES = $(lib_LTLIBRARIES)
 libwimaxll_la_LIBADD =
 am__objects_2 = libwimaxll_la-genl.lo libwimaxll_la-op-open.lo \
 	libwimaxll_la-op-msg.lo libwimaxll_la-op-reset.lo \
-	libwimaxll_la-op-rfkill.lo libwimaxll_la-mc_rx.lo \
-	libwimaxll_la-pipe.lo libwimaxll_la-re-state-change.lo \
+	libwimaxll_la-op-rfkill.lo libwimaxll_la-re-state-change.lo \
 	libwimaxll_la-wimax.lo
 am_libwimaxll_la_OBJECTS = $(am__objects_2)
 libwimaxll_la_OBJECTS = $(am_libwimaxll_la_OBJECTS)
@@ -220,8 +219,6 @@ libwimaxll_sources = \
         op-msg.c		\
         op-reset.c		\
         op-rfkill.c		\
-        mc_rx.c			\
-        pipe.c			\
         re-state-change.c	\
 	wimax.c
 
@@ -229,10 +226,10 @@ libwimaxll_la_SOURCES = $(libwimaxll_sources)
 # Trick automake
 libwimaxll_la_CFLAGS = $(AM_CFLAGS)
 # -version-info is CURRENT:REVISION:AGE
-# REVISION: inc for changes that do not affect the external interface
 # CURRENT: inc for added interfaces
+# REVISION: inc for changes that do not affect the external interface
 # AGE: inc for removed/changed existing interfaces
-libwimaxll_la_LDFLAGS = -version-info 0:0:0 $(LIBNL1_LIBS)
+libwimaxll_la_LDFLAGS = -version-info 1:0:0 $(LIBNL1_LIBS)
 libwimaxll_a_SOURCES = $(libwimaxll_sources)
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -278,7 +275,7 @@ config.h: stamp-h1
 stamp-h1: $(srcdir)/config.h.in $(top_builddir)/config.status
 	@rm -f stamp-h1
 	cd $(top_builddir) && $(SHELL) ./config.status lib/config.h
-$(srcdir)/config.h.in: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
+$(srcdir)/config.h.in: @MAINTAINER_MODE_TRUE@ $(am__configure_deps) 
 	cd $(top_srcdir) && $(AUTOHEADER)
 	rm -f stamp-h1
 	touch $@
@@ -314,7 +311,7 @@ uninstall-libLIBRARIES:
 
 clean-libLIBRARIES:
 	-test -z "$(lib_LIBRARIES)" || rm -f $(lib_LIBRARIES)
-libwimaxll.a: $(libwimaxll_a_OBJECTS) $(libwimaxll_a_DEPENDENCIES)
+libwimaxll.a: $(libwimaxll_a_OBJECTS) $(libwimaxll_a_DEPENDENCIES) 
 	-rm -f libwimaxll.a
 	$(libwimaxll_a_AR) libwimaxll.a $(libwimaxll_a_OBJECTS) $(libwimaxll_a_LIBADD)
 	$(RANLIB) libwimaxll.a
@@ -345,7 +342,7 @@ clean-libLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
-libwimaxll.la: $(libwimaxll_la_OBJECTS) $(libwimaxll_la_DEPENDENCIES)
+libwimaxll.la: $(libwimaxll_la_OBJECTS) $(libwimaxll_la_DEPENDENCIES) 
 	$(libwimaxll_la_LINK) -rpath $(libdir) $(libwimaxll_la_OBJECTS) $(libwimaxll_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
@@ -356,20 +353,16 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/genl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwimaxll_la-genl.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwimaxll_la-mc_rx.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwimaxll_la-op-msg.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwimaxll_la-op-open.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwimaxll_la-op-reset.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwimaxll_la-op-rfkill.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwimaxll_la-pipe.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwimaxll_la-re-state-change.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwimaxll_la-wimax.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mc_rx.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/op-msg.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/op-open.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/op-reset.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/op-rfkill.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pipe.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/re-state-change.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wimax.Po@am__quote@
 
@@ -428,20 +421,6 @@ libwimaxll_la-op-rfkill.lo: op-rfkill.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='op-rfkill.c' object='libwimaxll_la-op-rfkill.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwimaxll_la_CFLAGS) $(CFLAGS) -c -o libwimaxll_la-op-rfkill.lo `test -f 'op-rfkill.c' || echo '$(srcdir)/'`op-rfkill.c
-
-libwimaxll_la-mc_rx.lo: mc_rx.c
-@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwimaxll_la_CFLAGS) $(CFLAGS) -MT libwimaxll_la-mc_rx.lo -MD -MP -MF $(DEPDIR)/libwimaxll_la-mc_rx.Tpo -c -o libwimaxll_la-mc_rx.lo `test -f 'mc_rx.c' || echo '$(srcdir)/'`mc_rx.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libwimaxll_la-mc_rx.Tpo $(DEPDIR)/libwimaxll_la-mc_rx.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mc_rx.c' object='libwimaxll_la-mc_rx.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwimaxll_la_CFLAGS) $(CFLAGS) -c -o libwimaxll_la-mc_rx.lo `test -f 'mc_rx.c' || echo '$(srcdir)/'`mc_rx.c
-
-libwimaxll_la-pipe.lo: pipe.c
-@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwimaxll_la_CFLAGS) $(CFLAGS) -MT libwimaxll_la-pipe.lo -MD -MP -MF $(DEPDIR)/libwimaxll_la-pipe.Tpo -c -o libwimaxll_la-pipe.lo `test -f 'pipe.c' || echo '$(srcdir)/'`pipe.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libwimaxll_la-pipe.Tpo $(DEPDIR)/libwimaxll_la-pipe.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='pipe.c' object='libwimaxll_la-pipe.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwimaxll_la_CFLAGS) $(CFLAGS) -c -o libwimaxll_la-pipe.lo `test -f 'pipe.c' || echo '$(srcdir)/'`pipe.c
 
 libwimaxll_la-re-state-change.lo: re-state-change.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwimaxll_la_CFLAGS) $(CFLAGS) -MT libwimaxll_la-re-state-change.lo -MD -MP -MF $(DEPDIR)/libwimaxll_la-re-state-change.Tpo -c -o libwimaxll_la-re-state-change.lo `test -f 're-state-change.c' || echo '$(srcdir)/'`re-state-change.c

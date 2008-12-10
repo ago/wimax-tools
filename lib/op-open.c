@@ -79,17 +79,190 @@
 #include "debug.h"
 
 
+/*
+ * Netlink callback for (disabled) sequence check
+ *
+ * When reading from multicast groups ignore the sequence check, as
+ * they are events (as indicated by the netlink documentation; see the
+ * documentation on nl_disable_sequence_check(), for example here:
+ * http://people.suug.ch/~tgr/libnl/doc-1.1/
+ * group__socket.html#g0ff2f43147e3a4547f7109578b3ca422).
+ *
+ * We need to do this \e manually, as we are using a new callback set
+ * group and thus the libnl defaults set by
+ * nl_disable_sequence_check() don't apply.
+ */
+static
+int wimaxll_seq_check_cb(struct nl_msg *msg, void *arg)
+{
+	return NL_OK;
+}
+
+
+static
+/**
+ * Callback to process a (succesful) message coming from generic
+ * netlink
+ *
+ * \internal
+ *
+ * Called by nl_recvmsgs() when a valid message is received. We
+ * multiplex and handle messages that are known to the library. If the
+ * message is unknown, do nothing other than setting -ENODATA.
+ *
+ * When reading from a pipe with wimaxll_pipe_read(), -ENODATA is
+ * considered a retryable error -- effectively, the message is
+ * skipped.
+ *
+ * \fn int wimaxll_gnl_cb(struct nl_msg *msg, void *_ctx)
+ */
+int wimaxll_gnl_cb(struct nl_msg *msg, void *_ctx)
+{
+	ssize_t result;
+	struct wimaxll_gnl_cb_context *ctx = _ctx;
+	struct wimaxll_handle *wmx = ctx->wmx;
+	struct nlmsghdr *nl_hdr;
+	struct genlmsghdr *gnl_hdr;
+
+	d_fnstart(3, wmx, "(msg %p wmx %p)\n", msg, wmx);
+	nl_hdr = nlmsg_hdr(msg);
+	gnl_hdr = nlmsg_data(nl_hdr);
+
+	d_printf(3, wmx, "E: %s: received gnl message %d\n",
+		 __func__, gnl_hdr->cmd);
+	switch (gnl_hdr->cmd) {
+	case WIMAX_GNL_OP_MSG_TO_USER:
+		if (wmx->msg_to_user_cb)
+			result = wimaxll_gnl_handle_msg_to_user(wmx, msg);
+		else
+			goto out_no_handler;
+		break;
+	case WIMAX_GNL_RE_STATE_CHANGE:
+		if (wmx->state_change_cb)
+			result = wimaxll_gnl_handle_state_change(wmx, msg);
+		else
+			goto out_no_handler;
+		break;
+	default:
+		goto error_unknown_msg;
+	}
+	wimaxll_cb_maybe_set_result(ctx, 0);
+	d_fnend(3, wmx, "(msg %p ctx %p) = %zd\n", msg, ctx, result);
+	return result;
+
+error_unknown_msg:
+	d_printf(3, wmx, "E: %s: received unknown gnl message %d\n",
+		 __func__, gnl_hdr->cmd);
+out_no_handler:
+	wimaxll_cb_maybe_set_result(ctx, -ENODATA);
+	result = NL_SKIP;
+	d_fnend(3, wmx, "(msg %p ctx %p) = %zd\n", msg, ctx, result);
+	return result;
+}
+
+
+
+
+/**
+ * Return the file descriptor associated to a WiMAX handle
+ *
+ * \param wmx WiMAX device handle
+ *
+ * \return file descriptor associated to the handle can be fed to
+ *     functions like select() to wait for notifications to be ready..
+ *
+ * This allows to select() on the file descriptor, which will block
+ * until a message is available, that then can be read with
+ * wimaxll_recv().
+ *
+ * \ingroup the_messaging_interface
+ */
+int wimaxll_recv_fd(struct wimaxll_handle *wmx)
+{
+	return nl_socket_get_fd(wmx->nlh_rx);
+}
+
+
+/**
+ * Read notifications from the WiMAX multicast group
+ *
+ * \param wmx WiMAX device handle
+ * \return Value returned by the callback functions (depending on the
+ *     implementation of the callback). On error, a negative errno
+ *     code:
+ *
+ *     -%EINPROGRESS: the message was not received.
+ *
+ *     -%ENODATA: messages were received, but none of the known types.
+ *
+ * Read one or more messages from a multicast group and for each valid
+ * one, execute the callbacks set in the multi cast handle.
+ *
+ * The callbacks are expected to handle the messages and set
+ * information in the context specific to the mc handle
+ * (mch->cb_ctx). In case of any type of errors (cb_ctx.result < 0),
+ * it is expected that no resources will be tied to the context.
+ *
+ * \remarks This is a blocking call.
+ *
+ * \ingroup mc_rx
+ *
+ * \internal
+ *
+ * This calls nl_recvmsgs() on the handle specific to a multi-cast
+ * group; wimaxll_gnl_cb() will be called for succesfully received
+ * generic netlink messages from the kernel and execute the callbacks
+ * for each.
+ */
+ssize_t wimaxll_recv(struct wimaxll_handle *wmx)
+{
+	ssize_t result;
+	struct wimaxll_gnl_cb_context ctx = WIMAXLL_GNL_CB_CONTEXT_INIT(wmx);
+	struct nl_cb *cb;
+
+	d_fnstart(3, wmx, "(wmx %p)\n", wmx);
+
+	/*
+	 * The reading and processing happens here
+	 *
+	 * libnl's nl_recvmsgs() will read and call the different
+	 * callbacks we specified wimaxll_open() time. That's where
+	 * the processing of the message content is done.
+	 */
+	cb = nl_socket_get_cb(wmx->nlh_rx);
+	nl_cb_set(cb, NL_CB_ACK, NL_CB_CUSTOM, wimaxll_gnl_ack_cb, &ctx);
+	nl_cb_set(cb, NL_CB_SEQ_CHECK, NL_CB_CUSTOM,
+		  wimaxll_seq_check_cb, NULL);
+	nl_cb_set(cb, NL_CB_VALID, NL_CB_CUSTOM, wimaxll_gnl_cb, &ctx);
+	nl_cb_err(cb, NL_CB_CUSTOM, wimaxll_gnl_error_cb, &ctx);
+	d_printf(2, wmx, "I: Calling nl_recvmsgs()\n");
+	do {
+		ctx.result = -EINPROGRESS;
+		result = nl_recvmsgs(wmx->nlh_rx, cb);
+		d_printf(3, wmx, "I: ctx.result %zd result %zd\n",
+			 ctx.result, result);
+	} while ((ctx.result == -EINPROGRESS || ctx.result == -ENODATA)
+		 && result >= 0);
+	if (result < 0)
+		wimaxll_msg(wmx, "E: %s: nl_recvmgsgs failed: %d\n",
+			    __func__, result);
+	else
+		result = ctx.result;
+	/* No complains on error; the kernel might just be sending an
+	 * error out; pass it through. */
+	d_fnend(3, wmx, "(wmx %p) = %zd\n", wmx, result);
+	return result;
+}
+
+
 static
 void wimaxll_mc_group_cb(void *_wmx, const char *name, int id)
 {
 	struct wimaxll_handle *wmx = _wmx;
 
-	if (wmx->mc_n < sizeof(wmx->gnl_mc) / sizeof(wmx->gnl_mc[0])) {
-		struct wimaxll_mc_group *gmc = &wmx->gnl_mc[wmx->mc_n];
-		strncpy(gmc->name, name, sizeof(gmc->name));
-		gmc->id = id;
-		wmx->mc_n++;
-	}
+	if (strcmp(name, "msg"))
+		return;
+	wmx->mcg_id = id;
 }
 
 
@@ -97,7 +270,6 @@ static
 int wimaxll_gnl_resolve(struct wimaxll_handle *wmx)
 {
 	int result, version;
-	char buf[64];
 	unsigned major, minor;
 
 	d_fnstart(5, wmx, "(wmx %p)\n", wmx);
@@ -107,8 +279,7 @@ int wimaxll_gnl_resolve(struct wimaxll_handle *wmx)
 		wimaxll_msg(wmx, "E: device %s does not exist\n", wmx->name);
 		goto error_no_dev;
 	}
-	snprintf(buf, sizeof(buf), "WiMAX %u", wmx->ifidx);
-	result = genl_ctrl_resolve(wmx->nlh_tx, buf);
+	result = genl_ctrl_resolve(wmx->nlh_tx, "WiMAX");
 	if (result < 0) {
 		wimaxll_msg(wmx, "E: device %s presents no WiMAX interface; "
 			  "it might not exist, not be be a WiMAX device or "
@@ -119,9 +290,9 @@ int wimaxll_gnl_resolve(struct wimaxll_handle *wmx)
 	wmx->gnl_family_id = result;
 	d_printf(1, wmx, "D: WiMAX device %s, genl family ID %d\n",
 		 wmx->name, wmx->gnl_family_id);
-	nl_get_multicast_groups(wmx->nlh_tx, buf, wimaxll_mc_group_cb, wmx);
+	nl_get_multicast_groups(wmx->nlh_tx, "WiMAX", wimaxll_mc_group_cb, wmx);
 
-	version = genl_ctrl_get_version(wmx->nlh_tx, buf);
+	version = genl_ctrl_get_version(wmx->nlh_tx, "WiMAX");
 	/* Check version compatibility -- check include/linux/wimax.h
 	 * for a complete description. The idea is to allow for good
 	 * expandability of the interface without causing breakage. */
@@ -210,25 +381,39 @@ struct wimaxll_handle *wimaxll_open(const char *device)
 		goto error_nl_connect_tx;
 	}
 
+	/* Set up the RX side */
+	wmx->nlh_rx = nl_handle_alloc();
+	if (wmx->nlh_rx == NULL) {
+		result = nl_get_errno();
+		wimaxll_msg(wmx, "E: RX: cannot allocate netlink handle: %d\n",
+			    result);
+		goto error_nl_handle_alloc_rx;
+	}
+	result = nl_connect(wmx->nlh_rx, NETLINK_GENERIC);
+	if (result < 0) {
+		wimaxll_msg(wmx, "E: RX: cannot connect netlink: %d\n", result);
+		goto error_nl_connect_rx;
+	}
+
 	result = wimaxll_gnl_resolve(wmx);	/* Get genl information */
-	if (result < 0)
+	if (result < 0)				/* fills wmx->mcg_id */
 		goto error_gnl_resolve;
 
-	result = wimaxll_mc_rx_open(wmx, "msg");
-	if (result == -EPROTONOSUPPORT)		/* not open? */
-		wmx->mc_msg = WIMAXLL_MC_MAX;	/* for wimaxll_mc_rx_read() */
-	else if (result < 0) {
-		wimaxll_msg(wmx, "E: cannot open 'msg' multicast group: "
-			  "%d\n", result);
-		goto error_msg_open;
-	} else
-		wmx->mc_msg = result;
+	result = nl_socket_add_membership(wmx->nlh_rx, wmx->mcg_id);
+	if (result < 0) {
+		wimaxll_msg(wmx, "E: RX: cannot join multicast group %u: %d\n",
+			    wmx->mcg_id, result);
+		goto error_nl_add_membership;
+	}
 	d_fnend(3, wmx, "(device %s) = %p\n", device, wmx);
 	return wmx;
 
-	wimaxll_mc_rx_close(wmx, wmx->mc_msg);
-error_msg_open:
+error_nl_add_membership:
 error_gnl_resolve:
+	nl_close(wmx->nlh_rx);
+error_nl_connect_rx:
+	nl_handle_destroy(wmx->nlh_rx);
+error_nl_handle_alloc_rx:
 	nl_close(wmx->nlh_tx);
 error_nl_connect_tx:
 	nl_handle_destroy(wmx->nlh_tx);
@@ -249,18 +434,13 @@ error_gnl_handle_alloc:
  * \ingroup device_management
  * \internal
  *
- * Performs the natural oposite actions done in wimaxll_open(). All
- * generic netlink multicast groups are destroyed, the netlink handle
- * is closed and destroyed and finally, the actual handle is released.
+ * Performs the natural oposite actions done in wimaxll_open().
  */
 void wimaxll_close(struct wimaxll_handle *wmx)
 {
-	unsigned cnt;
-
 	d_fnstart(3, NULL, "(wmx %p)\n", wmx);
-	for (cnt = 0; cnt < WIMAXLL_MC_MAX; cnt++)
-		if (wmx->gnl_mc[cnt].mch)
-			wimaxll_mc_rx_close(wmx, cnt);
+	nl_close(wmx->nlh_rx);
+	nl_handle_destroy(wmx->nlh_rx);
 	nl_close(wmx->nlh_tx);
 	nl_handle_destroy(wmx->nlh_tx);
 	wimaxll_free(wmx);

@@ -104,6 +104,7 @@ int wimaxll_reset(struct wimaxll_handle *wmx)
 			  "%d 0x%08x\n", result, result);
 		goto error_msg_prep;
 	}
+	nla_put_u32(msg, WIMAX_GNL_RESET_IFIDX, (__u32) wmx->ifidx);
 	result = nl_send_auto_complete(wmx->nlh_tx, msg);
 	if (result < 0) {
 		wimaxll_msg(wmx, "E: RESET: error sending message: %zd\n",

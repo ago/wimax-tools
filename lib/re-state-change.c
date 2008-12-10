@@ -118,17 +118,16 @@ struct nla_policy wimaxll_gnl_re_state_change_policy[WIMAX_GNL_ATTR_MAX + 1] = {
  * wimaxll_pipe_read()).
  */
 int wimaxll_gnl_handle_state_change(struct wimaxll_handle *wmx,
-				    struct wimaxll_mc_handle *mch,
 				    struct nl_msg *msg)
 {
 	ssize_t result;
 	struct nlmsghdr *nl_hdr;
 	struct genlmsghdr *gnl_hdr;
 	struct nlattr *tb[WIMAX_GNL_ATTR_MAX+1];
-	struct wimaxll_gnl_cb_context *ctx = mch->state_change_context;
+	struct wimaxll_gnl_cb_context *ctx = wmx->state_change_context;
 	enum wimax_st old_state, new_state;
 
-	d_fnstart(7, wmx, "(msg %p mch %p)\n", msg, mch);
+	d_fnstart(7, wmx, "(msg %p)\n", msg);
 	nl_hdr = nlmsg_hdr(msg);
 	gnl_hdr = nlmsg_data(nl_hdr);
 
@@ -140,14 +139,14 @@ int wimaxll_gnl_handle_state_change(struct wimaxll_handle *wmx,
 	if (result < 0) {
 		wimaxll_msg(wmx, "E: %s: genlmsg_parse() failed: %d\n",
 			  __func__, result);
-		wimaxll_cb_context_set_result(ctx, result);
+		wimaxll_cb_maybe_set_result(ctx, result);
 		result = NL_SKIP;
 		goto error_parse;
 	}
 	if (tb[WIMAX_GNL_STCH_STATE_OLD] == NULL) {
 		wimaxll_msg(wmx, "E: %s: cannot find STCH_STATE_OLD "
 			    "attribute\n", __func__);
-		wimaxll_cb_context_set_result(ctx, -ENXIO);
+		wimaxll_cb_maybe_set_result(ctx, -ENXIO);
 		result = NL_SKIP;
 		goto error_no_attrs;
 
@@ -157,17 +156,21 @@ int wimaxll_gnl_handle_state_change(struct wimaxll_handle *wmx,
 	if (tb[WIMAX_GNL_STCH_STATE_NEW] == NULL) {
 		wimaxll_msg(wmx, "E: %s: cannot find STCH_STATE_NEW "
 			    "attribute\n", __func__);
-		wimaxll_cb_context_set_result(ctx, -ENXIO);
+		wimaxll_cb_maybe_set_result(ctx, -ENXIO);
 		result = NL_SKIP;
 		goto error_no_attrs;
 
 	}
 	new_state = nla_get_u8(tb[WIMAX_GNL_STCH_STATE_NEW]);
 
-	wimaxll_cb_context_set_result(ctx, 0);
 	d_printf(1, wmx, "D: CRX re_state_change old %u new %u\n",
 		 old_state, new_state);
-	if (mch->state_change_cb(wmx, ctx, old_state, new_state) == -EBUSY)
+
+	/* Now execute the callback for handling re-state-change; if
+	 * it doesn't update the context's result code, we'll do. */
+	result = wmx->state_change_cb(wmx, ctx, old_state, new_state);
+	wimaxll_cb_maybe_set_result(ctx, result);
+	if (result == -EBUSY)
 		result = NL_STOP;
 	else
 		result = NL_OK;
@@ -203,12 +206,8 @@ void wimaxll_get_cb_state_change(struct wimaxll_handle *wmx,
 			       wimaxll_state_change_cb_f *cb,
 			       struct wimaxll_gnl_cb_context **context)
 {
-	struct wimaxll_mc_handle *mch;
-	mch = __wimaxll_get_mc_handle(wmx, wmx->mc_msg);
-	if (mch != NULL) {
-		*cb = mch->state_change_cb;
-		*context = mch->state_change_context;
-	}
+	*cb = wmx->state_change_cb;
+	*context = wmx->state_change_context;
 }
 
 
@@ -225,13 +224,8 @@ void wimaxll_set_cb_state_change(struct wimaxll_handle *wmx,
 			       wimaxll_state_change_cb_f cb,
 			       struct wimaxll_gnl_cb_context *context)
 {
-	struct wimaxll_mc_handle *mch;
-
-	mch = __wimaxll_get_mc_handle(wmx, wmx->mc_msg);
-	if (mch != NULL) {
-		mch->state_change_cb = cb;
-		mch->state_change_context = context;
-	}
+	wmx->state_change_cb = cb;
+	wmx->state_change_context = context;
 }
 
 
@@ -301,7 +295,7 @@ ssize_t wimaxll_wait_for_state_change(struct wimaxll_handle *wmx,
 		  wmx, old_state, new_state);
 	wimaxll_get_cb_state_change(wmx, &prev_cb, &prev_ctx);
 	wimaxll_set_cb_state_change(wmx, wimaxll_cb_state_change, &ctx.ctx);
-	result = wimaxll_pipe_read(wmx, wmx->mc_msg);
+	result = wimaxll_recv(wmx);
 	/* the callback filled out *old_state and *new_state if ok */
 	wimaxll_set_cb_state_change(wmx, prev_cb, prev_ctx);
 	d_fnend(3, wmx, "(wmx %p old_state %p [%u] new_state %p [%u])\n",

@@ -116,13 +116,10 @@
  * @code
  * void *msg;
  * ...
- * handle = wimaxll_pipe_open(wmx, "PIPENAME");
- * ...
- * wimaxll_pipe_msg_read(wmx, handle, &msg);
+ * wimaxll_msg_read(wmx, "PIPE NAME", &msg);
  * ...
  * wimaxll_msg_free(msg);
  * ...
- * wimaxll_pipe_close(wmx, handle);
  * @endcode
  *
  * More information about the details of this interface can be found
@@ -177,33 +174,27 @@ struct nla_policy wimaxll_gnl_msg_from_user_policy[WIMAX_GNL_ATTR_MAX + 1] = {
  * \param msg Pointer to netlink message
  * \return \c enum nl_cb_action
  *
- * wimaxll_mc_rx_read() calls libnl's nl_recvmsgs() to receive messages;
+ * wimaxll_recv() calls libnl's nl_recvmsgs() to receive messages;
  * when a valid message is received, it goes into a loop that selects
  * a callback to run for each type of message and it will call this
  * function.
  *
- * This just expects a _MSG_TO_USER message, whose payload is what
- * has to be passed to the caller. Because nl_recvmsgs() will free the
- * message data, a new buffer has to be allocated and copied (a patch
- * has been merged already to future versions of libnl that helps in
- * this).
- *
- * It stores the buffer and size (or result in case of error) in the
- * context passed in \e mch->msg_to_user_context.
+ * This "netlink" callback will just de-marshall the arguments and
+ * call the callback set by the user with wimaxll_set_cb_msg_to_user().
  */
 int wimaxll_gnl_handle_msg_to_user(struct wimaxll_handle *wmx,
-				 struct wimaxll_mc_handle *mch,
-				 struct nl_msg *msg)
+				   struct nl_msg *msg)
 {
 	size_t size;
 	ssize_t result;
 	struct nlmsghdr *nl_hdr;
 	struct genlmsghdr *gnl_hdr;
 	struct nlattr *tb[WIMAX_GNL_ATTR_MAX+1];
-	struct wimaxll_gnl_cb_context *ctx = mch->msg_to_user_context;
+	struct wimaxll_gnl_cb_context *ctx = wmx->msg_to_user_context;
+	const char *pipe_name;
 	void *data;
 
-	d_fnstart(7, wmx, "(wmx %p mch %p msg %p)\n", wmx, mch, msg);
+	d_fnstart(7, wmx, "(wmx %p msg %p)\n", wmx, msg);
 	nl_hdr = nlmsg_hdr(msg);
 	gnl_hdr = nlmsg_data(nl_hdr);
 
@@ -215,37 +206,56 @@ int wimaxll_gnl_handle_msg_to_user(struct wimaxll_handle *wmx,
 	if (result < 0) {
 		wimaxll_msg(wmx, "E: %s: genlmsg_parse() failed: %d\n",
 			  __func__, result);
-		wimaxll_cb_context_set_result(ctx, result);
+		wimaxll_cb_maybe_set_result(ctx, result);
 		result = NL_SKIP;
 		goto error_parse;
 	}
-	if (tb[WIMAX_GNL_MSG_DATA] == NULL) {
-		wimaxll_msg(wmx, "E: %s: cannot find MSG_DATA attribute\n",
-			  __func__);
-		wimaxll_cb_context_set_result(ctx, -ENXIO);
+	/* Find if the message is for the interface wmx represents */
+	if (tb[WIMAX_GNL_MSG_IFIDX] == NULL) {
+		wimaxll_msg(wmx, "E: %s: cannot find IFIDX attribute\n",
+			    __func__);
+		wimaxll_cb_maybe_set_result(ctx, -ENODEV);
 		result = NL_SKIP;
 		goto error_no_attrs;
 
 	}
-	wimaxll_cb_context_set_result(ctx, 0);
+	if (wmx->ifidx != nla_get_u32(tb[WIMAX_GNL_MSG_IFIDX])) {
+		result = NL_OK;
+		goto error_not_for_us;
+	}
+	/* Extract marshalled arguments */
+	if (tb[WIMAX_GNL_MSG_DATA] == NULL) {
+		wimaxll_msg(wmx, "E: %s: cannot find MSG_DATA attribute\n",
+			  __func__);
+		wimaxll_cb_maybe_set_result(ctx, -ENXIO);
+		result = NL_SKIP;
+		goto error_no_attrs;
 
+	}
 	size = nla_len(tb[WIMAX_GNL_MSG_DATA]);
 	data = nla_data(tb[WIMAX_GNL_MSG_DATA]);
 
+	if (tb[WIMAX_GNL_MSG_PIPE_NAME])
+		pipe_name = nla_get_string(tb[WIMAX_GNL_MSG_PIPE_NAME]);
+	else
+		pipe_name = NULL;
+
 	d_printf(1, wmx, "D: CRX genlmsghdr cmd %u version %u\n",
 		 gnl_hdr->cmd, gnl_hdr->version);
-	d_printf(1, wmx, "D: CRX msg from kernel %u bytes\n", size);
+	d_printf(1, wmx, "D: CRX msg from kernel %u bytes pipe %s\n",
+		 size, pipe_name);
 	d_dump(2, wmx, data, size);
 
-	/* This was set by whoever called nl_recmvsgs (or
-	 * wimaxll_mc_rx_read() or wimaxll_pipe_read()) */
-	if (mch->msg_to_user_cb(wmx, ctx, data, size) == -EBUSY)
+	/* Now execute the callback for handling msg-to-user */
+	result = wmx->msg_to_user_cb(wmx, ctx, pipe_name, data, size);
+	if (result == -EBUSY)
 		result = NL_STOP;
 	else
 		result = NL_OK;
 error_no_attrs:
+error_not_for_us:
 error_parse:
-	d_fnend(7, wmx, "(wmx %p mch %p msg %p) = %d\n", wmx, mch, msg, result);
+	d_fnend(7, wmx, "(wmx %p msg %p) = %d\n", wmx, msg, result);
 	return result;
 }
 
@@ -259,28 +269,69 @@ struct wimaxll_cb_msg_to_user_context {
 /*
  * Default handling of messages
  *
- * When someone calls wimaxll_msg_read() or wimaxll_pipe_msg_read(), those
- * functions set this default callback, which will just copy the data
- * to a buffer and pass that pointer to the caller along with the size.
+ * When someone calls wimaxll_msg_read() those functions set this
+ * default callback, which will just copy the data to a buffer and
+ * pass that pointer to the caller along with the size.
  */
 static
 int wimaxll_cb_msg_to_user(struct wimaxll_handle *wmx,
-			 struct wimaxll_gnl_cb_context *ctx,
-			 const char *data, size_t data_size)
+			   struct wimaxll_gnl_cb_context *ctx,
+			   const char *pipe_name,
+			   const void *data, size_t data_size)
 {
+	int result;
 	struct wimaxll_cb_msg_to_user_context *mtu_ctx =
 		wimaxll_container_of(
 			ctx, struct wimaxll_cb_msg_to_user_context, ctx);
+	const char *dst_pipe_name = mtu_ctx->data;
+	int pipe_match;
 
-	if (mtu_ctx->data)
-		return -EBUSY;
+	d_fnstart(3, wmx, "(wmx %p ctx %p pipe_name %s data %p size %zd)\n",
+		  wmx, ctx, pipe_name, data, data_size);
+
+	result = -EBUSY;
+	if (mtu_ctx->ctx.result != -EINPROGRESS)
+		goto out;
+	/*
+	 * Is there a match in requested pipes? (dst_pipe_name ==
+	 * WIMAX_PIPE_ANY), * messages for any pipe work.
+	 *
+	 * This way of checking makes it kind of easier to read...if
+	 * the user requests messages from the default pipe (pipe_name
+	 * == NULL), we want only those. Sucks strcmp doesn't take
+	 * NULLs :)
+	 */
+	d_printf(3, wmx, "dst_pipe_name %s\n", dst_pipe_name);
+
+	if (dst_pipe_name == WIMAX_PIPE_ANY)
+		pipe_match = 1;
+	else if (dst_pipe_name == NULL && pipe_name == NULL)
+		pipe_match = 1;
+	else if ((dst_pipe_name == NULL && pipe_name != NULL)
+		 || (dst_pipe_name != NULL && pipe_name == NULL))
+		pipe_match = 0;
+	else if (strcmp(dst_pipe_name, pipe_name) == 0)
+		pipe_match = 1;
+	else
+		pipe_match = 0;
+
+	result = -EINPROGRESS;
+	if (pipe_match == 0)	/* Not addressed to us */
+		goto out;
+
 	mtu_ctx->data = malloc(data_size);
 	if (mtu_ctx->data) {
 		memcpy(mtu_ctx->data, data, data_size);
 		ctx->result = data_size;
 	} else
 		ctx->result = -ENOMEM;
-	return 0;
+	/* Now tell wimaxll_recv() [the callback dispatcher] to stop
+	 * and return control to the caller */
+	result = -EBUSY;
+out:
+	d_fnend(3, wmx, "(wmx %p ctx %p pipe_name %s data %p size %zd) = %d\n",
+		wmx, ctx, pipe_name, data, data_size, result);
+	return result;
 }
 
 
@@ -288,9 +339,10 @@ int wimaxll_cb_msg_to_user(struct wimaxll_handle *wmx,
  * Read a message from any WiMAX kernel-user pipe
  *
  * \param wmx WiMAX device handle
- * \param pipe_id Pipe to read from (as returned by
- *     wimaxll_pipe_open()). To use the default pipe, indicate
- *     use wimax_msg_pipe_id().
+ * \param pipe_name Name of the pipe for which we want to read a
+ *     message. If NULL, only messages from the default pipe (without
+ *     pipe name) will be received. To receive messages from any pipe,
+ *     use pipe ~NULL.
  * \param buf Somewhere where to store the pointer to the message data.
  * \return If successful, a positive (and \c *buf set) or zero size of
  *     the message; on error, a negative \a errno code (\c buf
@@ -304,45 +356,54 @@ int wimaxll_cb_msg_to_user(struct wimaxll_handle *wmx,
  * \note This is a blocking call.
  *
  * \ingroup the_messaging_interface
+ *
+ * \internal
+ *
+ * We use the data pointer of the context structure to pass the
+ * pipe_name to the callback. This is ok, as we process only one
+ * message and then return.
  */
-ssize_t wimaxll_pipe_msg_read(struct wimaxll_handle *wmx, unsigned pipe_id,
-			    void **buf)
+ssize_t wimaxll_msg_read(struct wimaxll_handle *wmx,
+			 const char *pipe_name, void **buf)
 {
 	ssize_t result;
 	struct wimaxll_cb_msg_to_user_context mtu_ctx = {
 		.ctx = WIMAXLL_GNL_CB_CONTEXT_INIT(wmx),
-		.data = NULL,
+		.data = (void *) pipe_name,
 	};
 	wimaxll_msg_to_user_cb_f prev_cb = NULL;
 	struct wimaxll_gnl_cb_context *prev_priv = NULL;
 
-	d_fnstart(3, wmx, "(wmx %p buf %p)\n", wmx, buf);
-	wimaxll_pipe_get_cb_msg_to_user(wmx, pipe_id, &prev_cb, &prev_priv);
-	wimaxll_pipe_set_cb_msg_to_user(wmx, pipe_id,
-				      wimaxll_cb_msg_to_user, &mtu_ctx.ctx);
-	result = wimaxll_pipe_read(wmx, pipe_id);
+	d_fnstart(3, wmx, "(wmx %p pipe_name %s, buf %p)\n",
+		  wmx, pipe_name, buf);
+	wimaxll_get_cb_msg_to_user(wmx, &prev_cb, &prev_priv);
+	wimaxll_set_cb_msg_to_user(wmx, wimaxll_cb_msg_to_user,
+				   &mtu_ctx.ctx);
+	do {
+		/* Loop until we get a message in the desired pipe */
+		result = wimaxll_recv(wmx);
+		d_printf(3, wmx, "I: mtu_ctx.result %zd result %zd\n",
+			 mtu_ctx.ctx.result, result);
+	} while (result >= 0 && mtu_ctx.ctx.result == -EINPROGRESS);
 	if (result >= 0) {
 		*buf = mtu_ctx.data;
 		result = mtu_ctx.ctx.result;
 	}
-	wimaxll_pipe_set_cb_msg_to_user(wmx, pipe_id, prev_cb, prev_priv);
-	d_fnend(3, wmx, "(wmx %p buf %p) = %zd\n", wmx, buf, result);
+	wimaxll_set_cb_msg_to_user(wmx, prev_cb, prev_priv);
+	d_fnend(3, wmx, "(wmx %p pipe_name %s buf %p) = %zd\n",
+		wmx, pipe_name, buf, result);
 	return result;
 }
 
 
 /**
- * Free a message received with wimaxll_pipe_msg_read() or
- * wimaxll_msg_read()
+ * Free a message received with wimaxll_msg_read()
  *
- * \param msg message pointer returned by wimaxll_pipe_msg_read() or
- *     wimaxll_msg_read().
- *
- * \note this function is the same as wimaxll_msg_free()
+ * \param msg message pointer returned by wimaxll_msg_read().
  *
  * \ingroup the_messaging_interface
  */
-void wimaxll_pipe_msg_free(void *msg)
+void wimaxll_msg_free(void *msg)
 {
 	d_fnstart(3, NULL, "(msg %p)\n", msg);
 	free(msg);
@@ -351,69 +412,11 @@ void wimaxll_pipe_msg_free(void *msg)
 
 
 /**
- * Return the file descriptor associated to the default \e message pipe
- *
- * \param wmx WiMAX device handle
- * \return file descriptor associated to the messaging group, that can
- *     be fed to functions like select().
- *
- * This allows to select() on the file descriptor, which will block
- * until a message is available, that then can be read with
- * wimaxll_pipe_read().
- *
- * \ingroup the_messaging_interface
- */
-int wimaxll_msg_fd(struct wimaxll_handle *wmx)
-{
-	return wimaxll_mc_rx_fd(wmx, wmx->mc_msg);
-}
-
-
-/**
- * Read a message from the WiMAX default \e message pipe.
- *
- * \param wmx WiMAX device handle
- * \param buf Somewhere where to store the pointer to the message data.
- * \return If successful, a positive (and \c *buf set) or zero size of
- *     the message; on error, a negative \a errno code (\c buf
- *     n/a).
- *
- * Returns a message allocated in \c *buf as sent by the kernel via
- * the default \e message pipe. The message is allocated by the
- * library and owned by the caller. When done, it has to be freed with
- * wimaxll_msg_free() to release the space allocated to it.
- *
- * \note This is a blocking call.
- *
- * \ingroup the_messaging_interface
- */
-ssize_t wimaxll_msg_read(struct wimaxll_handle *wmx, void **buf)
-{
-	return wimaxll_pipe_msg_read(wmx, wmx->mc_msg, buf);
-}
-
-
-/**
- * Free a message received with wimaxll_pipe_msg_read() or
- * wimaxll_msg_read()
- *
- * \param msg message pointer returned by wimaxll_pipe_msg_read() or
- *     wimaxll_msg_read().
- *
- * \note this function is the same as wimaxll_pipe_msg_free()
- *
- * \ingroup the_messaging_interface
- */
-void wimaxll_msg_free(void *msg)
-{
-	wimaxll_pipe_msg_free(msg);
-}
-
-
-/**
  * Send a driver-specific message to a WiMAX device
  *
  * \param wmx wimax device descriptor
+ * \param pipe_name Name of the pipe for which to send the message;
+ *     NULL to send it to no pipe in particular.
  * \param buf Pointer to the wimax message.
  * \param size size of the message.
  *
@@ -428,6 +431,7 @@ void wimaxll_msg_free(void *msg)
  * \ingroup the_messaging_interface
  */
 ssize_t wimaxll_msg_write(struct wimaxll_handle *wmx,
+			  const char *pipe_name,
 			  const void *buf, size_t size)
 {
 	ssize_t result;
@@ -452,6 +456,9 @@ ssize_t wimaxll_msg_write(struct wimaxll_handle *wmx,
 		goto error_msg_prep;
 	}
 
+	nla_put_u32(nl_msg, WIMAX_GNL_MSG_IFIDX, (__u32) wmx->ifidx);
+	if (pipe_name != NULL)
+		nla_put_string(nl_msg, WIMAX_GNL_MSG_PIPE_NAME, pipe_name);
 	nla_put(nl_msg, WIMAX_GNL_MSG_DATA, size, buf);
 
 	d_printf(5, wmx, "D: CTX nl + genl header:\n");
@@ -481,43 +488,21 @@ error_msg_alloc:
 
 
 /**
- * Return the pipe ID for the messaging interface
- *
- * @param wmx WiMAX device descriptor
- * @return Pipe id of the messaging interface, that can be used with
- *     the wimaxll_pipe_*() functions.
- *
- * \ingroup the_messaging_interface_group
- */
-unsigned wimaxll_msg_pipe_id(struct wimaxll_handle *wmx)
-{
-	return wmx->mc_msg;
-}
-
-
-/**
  * Get the callback and priv pointer for a MSG_TO_USER message
  *
  * \param wmx WiMAX handle.
- * \param pipe_id Pipe on which to listen for the message [as returned
- *     by wimaxll_pipe_open()].
  * \param cb Where to store the current callback function.
  * \param context Where to store the private data pointer passed to the
  *     callback.
  *
  * \ingroup the_messaging_interface_group
  */
-void wimaxll_pipe_get_cb_msg_to_user(
-	struct wimaxll_handle *wmx, unsigned pipe_id,
-	wimaxll_msg_to_user_cb_f *cb, struct wimaxll_gnl_cb_context **context)
+void wimaxll_get_cb_msg_to_user(
+	struct wimaxll_handle *wmx, wimaxll_msg_to_user_cb_f *cb,
+	struct wimaxll_gnl_cb_context **context)
 {
-	struct wimaxll_mc_handle *mch;
-
-	mch = __wimaxll_get_mc_handle(wmx, pipe_id);
-	if (mch != NULL) {
-		*cb = mch->msg_to_user_cb;
-		*context = mch->msg_to_user_context;
-	}
+	*cb = wmx->msg_to_user_cb;
+	*context = wmx->msg_to_user_context;
 }
 
 
@@ -525,8 +510,6 @@ void wimaxll_pipe_get_cb_msg_to_user(
  * Set the callback and priv pointer for a MSG_TO_USER message
  *
  * \param wmx WiMAX handle.
- * \param pipe_id Pipe on which to listen for the message [as returned
- *     by wimaxll_pipe_open()].
  * \param cb Callback function to set
  * \param context Private data pointer to pass to the callback
  *     function (wrap a \a struct wimaxll_gnl_cb_context in your context
@@ -535,15 +518,10 @@ void wimaxll_pipe_get_cb_msg_to_user(
  *
  * \ingroup the_messaging_interface_group
  */
-void wimaxll_pipe_set_cb_msg_to_user(
-	struct wimaxll_handle *wmx, unsigned pipe_id,
-	wimaxll_msg_to_user_cb_f cb, struct wimaxll_gnl_cb_context *context)
+void wimaxll_set_cb_msg_to_user(
+	struct wimaxll_handle *wmx, wimaxll_msg_to_user_cb_f cb,
+	struct wimaxll_gnl_cb_context *context)
 {
-	struct wimaxll_mc_handle *mch;
-
-	mch = __wimaxll_get_mc_handle(wmx, pipe_id);
-	if (mch != NULL) {
-		mch->msg_to_user_cb = cb;
-		mch->msg_to_user_context = context;
-	}
+	wmx->msg_to_user_cb = cb;
+	wmx->msg_to_user_context = context;
 }

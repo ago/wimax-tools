@@ -110,6 +110,7 @@ int wimaxll_rfkill(struct wimaxll_handle *wmx, enum wimax_rf_state state)
 			  "%d 0x%08x\n", result, result);
 		goto error_msg_prep;
 	}
+	nla_put_u32(msg, WIMAX_GNL_RFKILL_IFIDX, (__u32) wmx->ifidx);
 	nla_put_u32(msg, WIMAX_GNL_RFKILL_STATE, (__u32) state);
 	result = nl_send_auto_complete(wmx->nlh_tx, msg);
 	if (result < 0) {

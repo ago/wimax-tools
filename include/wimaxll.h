@@ -50,7 +50,7 @@
  *
  * This library is provided as a convenience and using it is not
  * required to talk to the WiMAX kernel stack. It is possible to do so
- * by interacting with it over generic netlink.
+ * by interacting with it over generic netlink directly.
  *
  * \note this is a very low level library. It does not provide the
  * caller with means to scan, connect, disconnect, etc from a WiMAX
@@ -104,21 +104,17 @@
  *
  * The WiMAX kernel stack will broadcast notifications and
  * driver-specific messages to all the user space clients connected to
- * it over the default \e message \e pipe.
- *
- * Different drivers might implement pipes other then default pipe to
- * which applications can listen to.  For more information, see \ref
- * the_messaging_interface "the messaging interface".
+ * it over a generic netlink multicast group.
  *
  * To listen to said notifications, a library client needs to block
- * waiting for them or set \ref callbacks "callbacks" and integrate into
- * some kind of main loop using \e select() to detect notifications
- * ready from the kernel.
+ * waiting for them or set \ref callbacks "callbacks" and integrate
+ * into some kind of main loop using \e select() call to detect
+ * incoming notifications.
  *
  * Simple example of mainloop integration:
  *
  * @code
- * int fd = wimaxll_msg_fd(wmx);
+ * int fd = wimaxll_recv_fd(wmx);
  * fd_set pipe_fds, read_fds;
  * ...
  * // Main loop
@@ -128,14 +124,13 @@
  *         read_fds = pipe_fds;
  *         select(FD_SETSIZE, &read_fds, NULL, NULL, NULL);
  *         if (FD_ISSET(fd, &read_fds))
- *                 wimaxll_pipe_read(wmx, wimax_msg_pipe_id(wmx));
+ *                 wimaxll_recv(wmx);
  * }
  * @endcode
  *
- * This code will call wimaxll_pipe_read() on the default \e message
- * \e pipe when notifications are available for delivery. Calling said
- * function will execute, for each notification, the callback
- * associated to it.
+ * This code will call wimaxll_recv() when notifications are available
+ * for delivery. Calling said function will execute, for each
+ * notification, the callback associated to it.
  *
  * To wait for a \e state \e change notification, for example:
  *
@@ -148,8 +143,8 @@
  * waiting on a main loop. See \ref state_change_group "state changes"
  * for more information.
  *
- * To wait for a (device-specific) message from the driver on the
- * default \e message pipe, an application would use:
+ * To wait for a (device-specific) message from the driver, an
+ * application would use:
  *
  * @code
  * void *msg;
@@ -171,9 +166,8 @@
  * received from a message pipe. See
  * wimaxll_pipe_set_cb_msg_to_user().
  *
- * A message can be sent to the driver over the default \e message
- * pipe with wimaxll_msg_write(). Note you cannot send messages to the
- * driver over other pipes that are not the default \e message pipe.
+ * A message can be sent to the driver with wimaxll_msg_write().
+ * not the default \e message pipe.
  *
  * For more details, see \ref the_messaging_interface.
  *
@@ -195,28 +189,32 @@
  *
  * @section multithreading Multithreading
  *
- * This library is not threaded or locked. The maximum level of
- * paralellism you can do with one handle is:
+ * This library is not threaded or locked. Internally it uses two
+ * different netlink handles, one for receiving and one for sending;
+ * thus the maximum level of paralellism you can do with one handle
+ * is:
  *
  * - Functions that can't be executed in parallel when using the same
- *   handle (need to be serialized):
+ *   wimaxll handle (need to be serialized):
  *   <ul>
- *     <li> wimaxll_msg_write()
- *     <li> wimaxll_rfkill()
- *     <li> wimaxll_pipe_open(), wimaxll_pipe_msg_read(),
- *          wimaxll_pipe_msg_free(), wimaxll_pipe_close()
- *     <li> wimaxll_mc_rx_open(), wimaxll_mc_rx_close(), wimaxll_mc_rx_read()
- *     <li> wimaxll_reset()
+ *     <li> wimaxll_msg_write(), wimaxll_rfkill(), wimax_reset()
+ *     <li> wimaxll_recv(), wimaxll_msg_read(),
+ *          wimaxll_wait_for_state_change()
+ *     <li> wimax_get_cb_*() and wimax_set_cb_*().
+ *     <li> wimaxll_recv_fd(), as long as the handle is valid.
  *   </ul>
  *
- * - wimaxll_msg_read(), wimaxll_pipe_msg_read() and wimaxll_mc_rx_read()
- *   can be run in parallel with other functions, except with
- *   themselves.
+ * - Function calls that have to be always serialized with respect to
+ *   any other:
+ *   <ul>
+ *     <li> wimaxll_open() and wimaxll_close()
+ *     <li> wimax_get_cb_*() and wimax_set_cb_*().
+ *   </ul>
  *
- * - callbacks are all executed serially; don't call any pipe
- *   management function from inside a callback.
+ * - callbacks are all executed serially; don't call wimax_recv() from
+ *   inside a callback.
  *
- * - \a wimaxll_swap_*() and \a wimaxll_*cpu*() can all be parallelized.
+ * Any function not covered by the in this list can be parallelizable.
  */
 
 
@@ -246,7 +244,7 @@ struct nlattr;
  * When notification callbacks are being executed, the processing of
  * notifications from the kernel is effectively blocked by it. Care
  * must be taken not to call blocking functions, especially
- * wimaxll_pipe_read().
+ * wimaxll_recv().
  *
  * Callbacks are always passed a pointer to a private context as set
  * by the application. The context is always of type struct
@@ -276,17 +274,20 @@ struct nlattr;
  * \param wmx WiMAX device handle
  * \param ctx Context passed by the user with
  *     wimaxll_pipe_set_cb_msg_to_user().
+ * \param pipe_name Name of the pipe the message is sent for
  * \param data Pointer to a buffer with the message data.
  * \param size Size of the buffer
  * \return 0 if it is ok to keep processing messages, -EBUSY if
  *     message processing should stop and control be returned to the
- *     caller.
+ *     caller. -EINPROGRESS if the callback wants to ignore the
+ *     message.
  *
  * \ingroup the_messaging_interface
  */
 typedef int (*wimaxll_msg_to_user_cb_f)(struct wimaxll_handle *wmx,
 					struct wimaxll_gnl_cb_context *ctx,
-					const char *data, size_t size);
+					const char *pipe_name,
+					const void *data, size_t size);
 
 /**
  * Callback for a \e state \e change notification from the WiMAX
@@ -434,9 +435,9 @@ static inline	// ugly workaround for doxygen
  * \param val value to set for \a result
  *
  * \ingroup callbacks
- * \fn static void wimaxll_cb_context_set_result(struct wimaxll_gnl_cb_context *ctx, int val)
+ * \fn static void wimaxll_cb_maybe_set_result(struct wimaxll_gnl_cb_context *ctx, int val)
  */
-void wimaxll_cb_context_set_result(struct wimaxll_gnl_cb_context *ctx, int val)
+void wimaxll_cb_maybe_set_result(struct wimaxll_gnl_cb_context *ctx, int val)
 {
 	if (ctx != NULL && ctx->result == -EINPROGRESS)
 		ctx->result = val;
@@ -448,35 +449,25 @@ struct wimaxll_handle *wimaxll_open(const char *device_name);
 void wimaxll_close(struct wimaxll_handle *);
 const char *wimaxll_ifname(const struct wimaxll_handle *);
 
-/* Very low level handling of pipes for reading generic netlink
- * messages from the kernel */
-int wimaxll_mc_rx_open(struct wimaxll_handle *, const char *);
-int wimaxll_mc_rx_fd(struct wimaxll_handle *, unsigned);
-void wimaxll_mc_rx_close(struct wimaxll_handle *, unsigned);
-ssize_t wimaxll_mc_rx_read(struct wimaxll_handle *, unsigned);
-
-/* Handling of pipes for generic netlink messages from the kernel */
-int wimaxll_pipe_open(struct wimaxll_handle *, const char *);
-int wimaxll_pipe_fd(struct wimaxll_handle *, unsigned);
-ssize_t wimaxll_pipe_read(struct wimaxll_handle *, unsigned pipe_id);
-void wimaxll_pipe_close(struct wimaxll_handle *, unsigned);
-
-/* driver-user messaging interface for all the pipes */
-ssize_t wimaxll_pipe_msg_read(struct wimaxll_handle *, unsigned, void **);
-void wimaxll_pipe_msg_free(void *);
-void wimaxll_pipe_get_cb_msg_to_user(struct wimaxll_handle *, unsigned pipe_id,
-				     wimaxll_msg_to_user_cb_f *,
-				     struct wimaxll_gnl_cb_context **);
-void wimaxll_pipe_set_cb_msg_to_user(struct wimaxll_handle *, unsigned pipe_id,
-				     wimaxll_msg_to_user_cb_f,
-				     struct wimaxll_gnl_cb_context *);
+/* Wait for data from the kernel, execute callbacks */
+int wimaxll_recv_fd(struct wimaxll_handle *);
+int wimaxll_recv(struct wimaxll_handle *);
 
 /* Default (bidirectional) message pipe from the kernel */
-int wimaxll_msg_fd(struct wimaxll_handle *);
-ssize_t wimaxll_msg_read(struct wimaxll_handle *, void **);
-ssize_t wimaxll_msg_write(struct wimaxll_handle *, const void *, size_t);
+ssize_t wimaxll_msg_write(struct wimaxll_handle *, const char *,
+			  const void *, size_t);
+
+void wimaxll_get_cb_msg_to_user(struct wimaxll_handle *,
+				wimaxll_msg_to_user_cb_f *,
+				struct wimaxll_gnl_cb_context **);
+void wimaxll_set_cb_msg_to_user(struct wimaxll_handle *,
+				wimaxll_msg_to_user_cb_f,
+				struct wimaxll_gnl_cb_context *);
+
+#define WIMAX_PIPE_ANY (NULL-1)
+ssize_t wimaxll_msg_read(struct wimaxll_handle *, const char *pine_name,
+			 void **);
 void wimaxll_msg_free(void *);
-unsigned wimaxll_msg_pipe_id(struct wimaxll_handle *);
 
 /* generic API */
 int wimaxll_rfkill(struct wimaxll_handle *, enum wimax_rf_state);
