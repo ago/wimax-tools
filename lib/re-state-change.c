@@ -92,6 +92,7 @@
  */
 static
 struct nla_policy wimaxll_gnl_re_state_change_policy[WIMAX_GNL_ATTR_MAX + 1] = {
+	[WIMAX_GNL_STCH_IFIDX] = { .type = NLA_U32 },
 	[WIMAX_GNL_STCH_STATE_OLD] = { .type = NLA_U8 },
 	[WIMAX_GNL_STCH_STATE_NEW] = { .type = NLA_U8 },
 };
@@ -142,6 +143,20 @@ int wimaxll_gnl_handle_state_change(struct wimaxll_handle *wmx,
 		result = NL_SKIP;
 		goto error_parse;
 	}
+	/* Find if the message is for the interface wmx represents */
+	if (tb[WIMAX_GNL_STCH_IFIDX] == NULL) {
+		wimaxll_msg(wmx, "E: %s: cannot find IFIDX attribute\n",
+			    __func__);
+		wimaxll_cb_maybe_set_result(ctx, -ENODEV);
+		result = NL_SKIP;
+		goto error_no_attrs;
+
+	}
+	if (wmx->ifidx != nla_get_u32(tb[WIMAX_GNL_STCH_IFIDX])) {
+		result = NL_SKIP;
+		goto error_no_attrs;
+	}
+
 	if (tb[WIMAX_GNL_STCH_STATE_OLD] == NULL) {
 		wimaxll_msg(wmx, "E: %s: cannot find STCH_STATE_OLD "
 			    "attribute\n", __func__);

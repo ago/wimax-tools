@@ -124,6 +124,12 @@ struct nla_policy wimaxll_gnl_msg_from_user_policy[WIMAX_GNL_ATTR_MAX + 1] = {
 	[WIMAX_GNL_MSG_DATA] = {
 		.type = NLA_UNSPEC,
 	},
+	[WIMAX_GNL_MSG_IFIDX] = {
+		.type = NLA_U32,
+	},
+	[WIMAX_GNL_MSG_PIPE_NAME] = {
+		.type = NLA_STRING,
+	},
 };
 
 
