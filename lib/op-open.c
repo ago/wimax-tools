@@ -145,7 +145,8 @@ int wimaxll_gnl_cb(struct nl_msg *msg, void *_ctx)
 	default:
 		goto error_unknown_msg;
 	}
-	wimaxll_cb_maybe_set_result(ctx, 0);
+	if (result == NL_STOP)
+		wimaxll_cb_maybe_set_result(ctx, 0);
 	d_fnend(3, wmx, "(msg %p ctx %p) = %zd\n", msg, ctx, result);
 	return result;
 
