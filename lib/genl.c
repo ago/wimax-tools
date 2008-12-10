@@ -105,10 +105,10 @@ static int family_handler(struct nl_msg *msg, void *_arg)
 /**
  * Enumerates the list of available multicast groups for a family
  *
- * @handle: netlink handle to use for querying the list
- * @family: name of family to query for multicast groups
- * @cb: callback function to call with each multicast group's information.
- * @priv: pointer to pass to the callback function
+ * \param handle netlink handle to use for querying the list
+ * \param family name of family to query for multicast groups
+ * \param cbf callback function to call with each multicast group's information.
+ * \param priv pointer to pass to the callback function
  *
  * Returns: 0 if ok, < 0 errno code on error.
  *

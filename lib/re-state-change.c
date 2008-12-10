@@ -57,9 +57,9 @@
  * @endcode
  *
  * and then wait for notifications to be available (see \ref receiving
- * "receiving with select()"). When data is available and
- * wimax_pipe_read() called to process them, the callback will be
- * executed for each state change notification.
+ * "receiving with select()"). When data is available and wimax_recv()
+ * is called to process it, the callback will be executed for each
+ * state change notification.
  *
  * Applications can query the current callback set for the state
  * change notifications with wimaxll_get_cb_state_change().
@@ -114,8 +114,7 @@ struct nla_policy wimaxll_gnl_re_state_change_policy[WIMAX_GNL_ATTR_MAX + 1] = {
  *
  * This just expects a _RE_STATE_CHANGE message, whose payload is what
  * has to be passed to the caller. We just extract the data and call
- * the callback defined by the caller to wimaxll_mc_rx_read() (or
- * wimaxll_pipe_read()).
+ * the callback defined in the handle.
  */
 int wimaxll_gnl_handle_state_change(struct wimaxll_handle *wmx,
 				    struct nl_msg *msg)
@@ -265,10 +264,9 @@ int wimaxll_cb_state_change(struct wimaxll_handle *wmx,
  * Waits for the WiMAX device to change state and reports said state
  * change.
  *
- * Internally, this function uses wimax_pipe_read() on the default \e
- * message pipe, which means that on reception (from the kernel) of
- * notifications other than state change, any callbacks that are set
- * for them will be executed.
+ * Internally, this function uses wimax_recv() , which means that on
+ * reception (from the kernel) of notifications other than state
+ * change, any callbacks that are set for them will be executed.
  *
  * \note This is a blocking call.
  *

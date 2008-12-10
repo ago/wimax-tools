@@ -38,25 +38,25 @@
  * This is a payload agnostic message interface for communication
  * between the WiMAX kernel drivers and user space applications.
  *
- * This interfaces builds on the \e kernel-to-user unidirectional \ref
- * the_pipe_interface_group "pipe interface". It writes data to the default
- * \e message pipe by sending it to the WiMAX kernel stack, which
- * passes it to the driver using the \e wimax_dev->op_msg_from_user()
- * call.
+ * It writes messages (wimax_msg_write()) by sending them to the WiMAX
+ * kernel stack, which passes it to the driver using the \e
+ * wimax_dev->op_msg_from_user() call.
  *
- * Only the default \e message pipe is bidirectional; WiMAX kernel
- * drivers receive messages sent with wimax_msg_write().
+ * To write messages to the driver:
  *
- * \note The wimaxll_msg_fd() and wimaxll_msg_read() functions operate
- * on the default \e message pipe, being convenience functions for
- * wimaxll_pipe_fd() and wimaxll_pipe_msg_read().
+ * @code
+ *  wimaxll_msg_write(wmx, PIPE_NAME, buf, buf_size);
+ * @endcode
+ *
+ * where \a buf points to where the message is stored. \e PIPE_NAME
+ * can be NULL. It is passed verbatim to the receiver.
  *
  * To wait for a message from the driver:
  *
  * @code
  *  void *msg;
  *  ...
- *  size = wimaxll_msg_read(wmx, &msg);
+ *  size = wimaxll_msg_read(wmx, PIPE_NAME, &msg);
  * @endcode
  *
  * Note this call is synchronous and blocking, and won't timeout. You
@@ -72,60 +72,25 @@
  *  wimaxll_msg_free(msg);
  * @endcode
  *
- * To write messages to the driver:
- *
- * @code
- *  wimaxll_msg_write(wmx, buf, buf_size);
- * @endcode
- *
- * where \a buf points to where the message is stored.
- *
- * \note Messages can be written to the driver \e only over the
- *     default \e message pipe. Thus, no wimax_pipe_msg_write()
- *     function is available.
- *
  * All functions return negative \a errno codes on error.
  *
  * To integrate message reception into a mainloop, \ref callbacks
  * "callbacks" and select() should be used. The file descriptor
  * associated to the default \e message \e pipe can be obtained with
- * wimaxll_msg_fd(). When there is activity on the file descriptor,
- * wimaxll_pipe_read() should be called on the default pipe:
+ * wimaxll_recv_fd(). When there is activity on the file descriptor,
+ * wimaxll_recv() should be called:
  *
  * \code
- * wimax_pipe_read(wmx, wimax_msg_pipe_id(wmx));
+ * wimax_recv(wmx);
  * \endcode
  *
  * this will, as explained in \ref receiving, for each received
  * notification, execute its callback.
  *
  * The callback for reception of messages from the WiMAX kernel stack
- * can be set with wimaxll_pipe_set_cb_msg_to_user() (using as \e
- * pipe_id the value returned by wimax_msg_pipe_id()). For detailed
+ * can be set with wimaxll_set_cb_msg_to_user()). For detailed
  * information on the message reception callback, see the definition
  * of \ref wimaxll_msg_to_user_cb_f.
- *
- * The kernel WiMAX stack allows drivers to create any number of pipes
- * on which to send information (messages) to user space. This
- * interface provides means to read those messages, which are mostly
- * device specific.
- *
- * This is a lower level interface than \ref the_messaging_interface
- * "the messaging interface"; however, it operates similarly.
- *
- * @code
- * void *msg;
- * ...
- * wimaxll_msg_read(wmx, "PIPE NAME", &msg);
- * ...
- * wimaxll_msg_free(msg);
- * ...
- * @endcode
- *
- * More information about the details of this interface can be found
- * \ref the_pipe_interface_group "here".
- *
- * \note These pipes are not bidirectional.
  */
 #define _GNU_SOURCE
 #include <sys/types.h>
@@ -153,7 +118,6 @@
  *
  * Authoritative reference for this is at the kernel code,
  * drivers/net/wimax/op-msg.c.
- *
  */
 static
 struct nla_policy wimaxll_gnl_msg_from_user_policy[WIMAX_GNL_ATTR_MAX + 1] = {
@@ -175,9 +139,10 @@ struct nla_policy wimaxll_gnl_msg_from_user_policy[WIMAX_GNL_ATTR_MAX + 1] = {
  * \return \c enum nl_cb_action
  *
  * wimaxll_recv() calls libnl's nl_recvmsgs() to receive messages;
- * when a valid message is received, it goes into a loop that selects
- * a callback to run for each type of message and it will call this
- * function.
+ * when a valid message is received, wimax_gnl__cb() that selects a
+ * callback to run for each type of message and it will call this
+ * function to actually do it. If no message handling callback is set,
+ * this is not called.
  *
  * This "netlink" callback will just de-marshall the arguments and
  * call the callback set by the user with wimaxll_set_cb_msg_to_user().
@@ -342,7 +307,7 @@ out:
  * \param pipe_name Name of the pipe for which we want to read a
  *     message. If NULL, only messages from the default pipe (without
  *     pipe name) will be received. To receive messages from any pipe,
- *     use pipe ~NULL.
+ *     use pipe WIMAX_PIPE_ANY.
  * \param buf Somewhere where to store the pointer to the message data.
  * \return If successful, a positive (and \c *buf set) or zero size of
  *     the message; on error, a negative \a errno code (\c buf
@@ -416,10 +381,9 @@ void wimaxll_msg_free(void *msg)
  *
  * \param wmx wimax device descriptor
  * \param pipe_name Name of the pipe for which to send the message;
- *     NULL to send it to no pipe in particular.
- * \param buf Pointer to the wimax message.
+ *     NULL means adding no destination pipe.
+ * \param buf Pointer to the message.
  * \param size size of the message.
- *
  * \return 0 if ok < 0 errno code on error. On error it is assumed
  *     the message wasn't delivered.
  *
@@ -490,6 +454,9 @@ error_msg_alloc:
 /**
  * Get the callback and priv pointer for a MSG_TO_USER message
  *
+ * Get the callback and private pointer that will be called by
+ * wimaxll_recv() when a MSG_TO_USER is received over generic netlink.
+ *
  * \param wmx WiMAX handle.
  * \param cb Where to store the current callback function.
  * \param context Where to store the private data pointer passed to the
@@ -508,6 +475,9 @@ void wimaxll_get_cb_msg_to_user(
 
 /**
  * Set the callback and priv pointer for a MSG_TO_USER message
+ *
+ * Set the callback and private pointer that will be called by
+ * wimaxll_recv() when a MSG_TO_USER is received over generic netlink.
  *
  * \param wmx WiMAX handle.
  * \param cb Callback function to set

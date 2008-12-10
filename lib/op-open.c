@@ -110,9 +110,8 @@ static
  * multiplex and handle messages that are known to the library. If the
  * message is unknown, do nothing other than setting -ENODATA.
  *
- * When reading from a pipe with wimaxll_pipe_read(), -ENODATA is
- * considered a retryable error -- effectively, the message is
- * skipped.
+ * In wimaxll_recv(), -ENODATA is considered a retryable error --
+ * effectively, the message is skipped.
  *
  * \fn int wimaxll_gnl_cb(struct nl_msg *msg, void *_ctx)
  */
