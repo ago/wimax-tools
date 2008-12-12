@@ -215,7 +215,6 @@ int wimaxll_gnl_handle_msg_to_user(struct wimaxll_handle *wmx,
 	result = wmx->msg_to_user_cb(wmx, wmx->msg_to_user_priv,
 				     pipe_name, data, size);
 error_no_attrs:
-error_not_for_us:
 error_parse:
 	d_fnend(7, wmx, "(wmx %p msg %p) = %d\n", wmx, msg, result);
 	return result;
