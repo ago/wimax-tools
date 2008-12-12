@@ -223,7 +223,7 @@ error_parse:
 
 
 struct wimaxll_cb_msg_to_user_context {
-	struct wimaxll_gnl_cb_context ctx;
+	struct wimaxll_cb_ctx ctx;
 	void *data;
 };
 
@@ -242,7 +242,7 @@ int wimaxll_msg_read_cb(struct wimaxll_handle *wmx,
 			const void *data, size_t data_size)
 {
 	int result;
-	struct wimaxll_gnl_cb_context *ctx = _ctx;
+	struct wimaxll_cb_ctx *ctx = _ctx;
 	struct wimaxll_cb_msg_to_user_context *mtu_ctx =
 		wimaxll_container_of(
 			ctx, struct wimaxll_cb_msg_to_user_context, ctx);
@@ -331,7 +331,7 @@ ssize_t wimaxll_msg_read(struct wimaxll_handle *wmx,
 {
 	ssize_t result;
 	struct wimaxll_cb_msg_to_user_context mtu_ctx = {
-		.ctx = WIMAXLL_GNL_CB_CONTEXT_INIT(wmx),
+		.ctx = WIMAXLL_CB_CTX_INIT(wmx),
 		.data = (void *) pipe_name,
 	};
 	wimaxll_msg_to_user_cb_f prev_cb = NULL;
@@ -480,7 +480,7 @@ void wimaxll_get_cb_msg_to_user(
  * \param wmx WiMAX handle.
  * \param cb Callback function to set
  * \param priv Private data pointer to pass to the callback
- *     function (wrap a \a struct wimaxll_gnl_cb_context in your context
+ *     function (wrap a \a struct wimaxll_cb_ctx in your context
  *     struct and pass a pointer to it; then use wimaxll_container_of()
  *     to extract it back).
  *

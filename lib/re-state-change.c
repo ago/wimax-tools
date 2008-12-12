@@ -190,7 +190,7 @@ error_parse:
  * wimaxll_wait_for_state_change()
  */
 struct wimaxll_state_change_context {
-	struct wimaxll_gnl_cb_context ctx;
+	struct wimaxll_cb_ctx ctx;
 	enum wimax_st *old_state, *new_state;
 	int set:1;
 };
@@ -238,7 +238,7 @@ static
 int wimaxll_cb_state_change(struct wimaxll_handle *wmx, void *_ctx,
 			    enum wimax_st old_state, enum wimax_st new_state)
 {
-	struct wimaxll_gnl_cb_context *ctx = _ctx;
+	struct wimaxll_cb_ctx *ctx = _ctx;
 	struct wimaxll_state_change_context *stch_ctx =
 		wimaxll_container_of(ctx, struct wimaxll_state_change_context,
 				     ctx);
@@ -285,7 +285,7 @@ ssize_t wimaxll_wait_for_state_change(struct wimaxll_handle *wmx,
 	wimaxll_state_change_cb_f prev_cb = NULL;
 	void *prev_priv = NULL;
 	struct wimaxll_state_change_context ctx = {
-		.ctx = WIMAXLL_GNL_CB_CONTEXT_INIT(wmx),
+		.ctx = WIMAXLL_CB_CTX_INIT(wmx),
 		.old_state = old_state,
 		.new_state = new_state,
 		.set = 0,

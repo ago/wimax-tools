@@ -66,10 +66,10 @@ enum {
  * struct wimaxll_handle *wmx;
  * ...
  * struct my_context {
- *         struct wimaxll_gnl_cb_context ctx;
+ *         struct wimaxll_cb_ctx ctx;
  *         <my data>
  * } my_ctx = {
- *        .ctx = WIMAXLL_GNL_CB_CONTEXT_INIT(wmx),
+ *        .ctx = WIMAXLL_CB_CTX_INIT(wmx),
  *        <my data initialization>
  * };
  * ...
@@ -101,7 +101,7 @@ enum {
  *     errors) for a message have been received and the message
  *     receiving loop can be considered done.
  */
-struct wimaxll_gnl_cb_context {
+struct wimaxll_cb_ctx {
 	struct wimaxll_handle *wmx;
 	ssize_t result;
 	unsigned msg_done:1;	/* internal */
@@ -109,7 +109,7 @@ struct wimaxll_gnl_cb_context {
 
 
 /**
- * Initialize a definition of struct wimaxll_gnl_cb_context
+ * Initialize a definition of struct wimaxll_cb_ctx
  *
  * \param _wmx pointer to the WiMAX device handle this will be
  *     associated to
@@ -119,12 +119,12 @@ struct wimaxll_gnl_cb_context {
  * \code
  * struct wimaxll_handle *wmx;
  * ...
- * struct wimaxll_gnl_cb_context my_context = WIMAXLL_GNL_CB_CONTEXT_INIT(wmx);
+ * struct wimaxll_cb_ctx my_context = WIMAXLL_CB_CTX_INIT(wmx);
  * \endcode
  *
  * \ingroup callbacks
  */
-#define WIMAXLL_GNL_CB_CONTEXT_INIT(_wmx) {	\
+#define WIMAXLL_CB_CTX_INIT(_wmx) {	\
 	.wmx = (_wmx),				\
 	.result = -EINPROGRESS,			\
 }
@@ -132,9 +132,9 @@ struct wimaxll_gnl_cb_context {
 
 static inline	// ugly workaround for doxygen
 /**
- * Initialize a struct wimaxll_gnl_cb_context
+ * Initialize a struct wimaxll_cb_ctx
  *
- * \param ctx Pointer to the struct wimaxll_gnl_cb_context.
+ * \param ctx Pointer to the struct wimaxll_cb_ctx.
  * \param wmx pointer to the WiMAX device handle this will be
  *     associated to
  *
@@ -143,16 +143,15 @@ static inline	// ugly workaround for doxygen
  * \code
  * struct wimaxll_handle *wmx;
  * ...
- * struct wimaxll_gnl_cb_context my_context;
+ * struct wimaxll_cb_ctx my_context;
  * ...
- * wimaxll_gnl_cb_context(&my_context, wmx);
+ * wimaxll_cb_ctx(&my_context, wmx);
  * \endcode
  *
  * \ingroup callbacks
- * \fn static void wimaxll_gnl_cb_context_init(struct wimaxll_gnl_cb_context *ctx, struct wimaxll_handle *wmx)
+ * \fn static void wimaxll_cb_ctx_init(struct wimaxll_cb_ctx *ctx, struct wimaxll_handle *wmx)
  */
-void wimaxll_gnl_cb_context_init(struct wimaxll_gnl_cb_context *ctx,
-				 struct wimaxll_handle *wmx)
+void wimaxll_cb_ctx_init(struct wimaxll_cb_ctx *ctx, struct wimaxll_handle *wmx)
 {
 	ctx->wmx = wmx;
 	ctx->result = -EINPROGRESS;
@@ -167,9 +166,9 @@ static inline	// ugly workaround for doxygen
  * \param val value to set for \a result
  *
  * \ingroup callbacks
- * \fn static void wimaxll_cb_maybe_set_result(struct wimaxll_gnl_cb_context *ctx, int val)
+ * \fn static void wimaxll_cb_maybe_set_result(struct wimaxll_cb_ctx *ctx, int val)
  */
-void wimaxll_cb_maybe_set_result(struct wimaxll_gnl_cb_context *ctx, int val)
+void wimaxll_cb_maybe_set_result(struct wimaxll_cb_ctx *ctx, int val)
 {
 	if (ctx != NULL && ctx->result == -EINPROGRESS)
 		ctx->result = val;

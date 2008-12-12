@@ -60,7 +60,7 @@
  *
  * \param nla Source netlink address
  * \param nlerr Netlink error descritor
- * \param _ctx Pointer to (\a struct wimaxll_gnl_cb_context)
+ * \param _ctx Pointer to (\a struct wimaxll_cb_ctx)
  *
  * \return 'enum nl_cb_action', NL_OK if there is no error, NL_STOP on
  *     error and _mch->result possibly updated.
@@ -72,7 +72,7 @@
 int wimaxll_gnl_error_cb(struct sockaddr_nl *nla, struct nlmsgerr *nlerr,
 			 void *_ctx)
 {
-	struct wimaxll_gnl_cb_context *ctx = _ctx;
+	struct wimaxll_cb_ctx *ctx = _ctx;
 	struct wimaxll_handle *wmx = ctx->wmx;
 
 	d_fnstart(3, wmx, "(nla %p nlnerr %p [%d] ctx %p)\n",
@@ -108,7 +108,7 @@ int wimaxll_gnl_ack_cb(struct nl_msg *msg, void *_ctx)
 	struct nlmsghdr *nl_hdr;
 	struct nlmsgerr *nl_err;
 	size_t size = nlmsg_len(nlmsg_hdr(msg));
-	struct wimaxll_gnl_cb_context *ctx = _ctx;
+	struct wimaxll_cb_ctx *ctx = _ctx;
 
 	d_fnstart(7, NULL, "(msg %p ctx %p)\n", msg, _ctx);
 	nl_hdr = nlmsg_hdr(msg);
@@ -166,7 +166,7 @@ int wimaxll_wait_for_ack(struct wimaxll_handle *wmx)
 {
 	int result;
 	struct nl_cb *cb;
-	struct wimaxll_gnl_cb_context ctx;
+	struct wimaxll_cb_ctx ctx;
 
 	ctx.wmx = wmx;
 	ctx.result = -EINPROGRESS;

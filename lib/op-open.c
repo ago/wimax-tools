@@ -126,7 +126,7 @@ int wimaxll_gnl_cb(struct nl_msg *msg, void *_ctx)
 {
 	ssize_t result;
 	enum nl_cb_action result_nl;
-	struct wimaxll_gnl_cb_context *ctx = _ctx;
+	struct wimaxll_cb_ctx *ctx = _ctx;
 	struct wimaxll_handle *wmx = ctx->wmx;
 	struct nlmsghdr *nl_hdr;
 	struct genlmsghdr *gnl_hdr;
@@ -223,7 +223,7 @@ int wimaxll_recv_fd(struct wimaxll_handle *wmx)
 ssize_t wimaxll_recv(struct wimaxll_handle *wmx)
 {
 	ssize_t result;
-	struct wimaxll_gnl_cb_context ctx = WIMAXLL_GNL_CB_CONTEXT_INIT(wmx);
+	struct wimaxll_cb_ctx ctx = WIMAXLL_CB_CTX_INIT(wmx);
 	struct nl_cb *cb;
 
 	d_fnstart(3, wmx, "(wmx %p)\n", wmx);
