@@ -227,14 +227,8 @@
 #include <stdarg.h>
 #include <linux/wimax.h>
 
-/**
- * A WiMax control pipe handle
- *
- * This type is opaque to the user
- */
 struct wimaxll_handle;
 
-struct wimaxll_gnl_cb_context;
 struct nlattr;
 
 
@@ -247,17 +241,9 @@ struct nlattr;
  * wimaxll_recv().
  *
  * Callbacks are always passed a pointer to a private context as set
- * by the application. The context is always of type struct
- * wimaxll_gnl_cb_context and is meant to be used wrapped in an
- * application-specific structure where private information can be
- * stored.
- *
- * When an application specific context is created, the
- * wimaxll_gnl_cb_context part of it should be initialized (with
- * WIMAXLL_GNL_CB_CONTEXT_INIT() or
- * wimaxll_gnl_cb_context_init()). Callback functions can safely
- * update it's \e result field with wimaxll_cb_context_set_result().
+ * by the application.
  */
+
 
 /**
  * Callback for a \e message \e to \e user generic netlink message
@@ -272,20 +258,20 @@ struct nlattr;
  * guidelines for using callbacks.
  *
  * \param wmx WiMAX device handle
- * \param ctx Context passed by the user with
+ * \param priv Context passed by the user with
  *     wimaxll_pipe_set_cb_msg_to_user().
  * \param pipe_name Name of the pipe the message is sent for
  * \param data Pointer to a buffer with the message data.
  * \param size Size of the buffer
- * \return 0 if it is ok to keep processing messages, -EBUSY if
+ * \return >= 0 if it is ok to keep processing messages, -EBUSY if
  *     message processing should stop and control be returned to the
- *     caller. -EINPROGRESS if the callback wants to ignore the
- *     message.
+ *     caller. Any other negative error code to continue processing
+ *     messages skipping the current one.
  *
  * \ingroup the_messaging_interface
  */
 typedef int (*wimaxll_msg_to_user_cb_f)(struct wimaxll_handle *wmx,
-					struct wimaxll_gnl_cb_context *ctx,
+					void *priv,
 					const char *pipe_name,
 					const void *data, size_t size);
 
@@ -300,148 +286,20 @@ typedef int (*wimaxll_msg_to_user_cb_f)(struct wimaxll_handle *wmx,
  * guidelines for using callbacks.
  *
  * \param wmx WiMAX device handle
- * \param ctx Context passed by the user with
- *     wimaxll_set_cb_state_change(). This is a pointer to a standard
- *     context structure than can be wrapped in application-specific
- *     ones.
+ * \param priv ctx Context passed by the user with
+ *     wimaxll_set_cb_state_change().
  * \param old_state State the WiMAX device left
  * \param new_state State the WiMAX device entered
- * \return 0 if it is ok to keep processing messages, -EBUSY if
+ * \return >= 0 if it is ok to keep processing messages, -EBUSY if
  *     message processing should stop and control be returned to the
- *     caller.
+ *     caller. Any other negative error code to continue processing
+ *     messages skipping the current one.
  *
  * \ingroup state_change_group
  */
 typedef int (*wimaxll_state_change_cb_f)(
-	struct wimaxll_handle *, struct wimaxll_gnl_cb_context *,
+	struct wimaxll_handle *, void *priv,
 	enum wimax_st old_state, enum wimax_st new_state);
-
-
-/**
- * General structure for storing callback context
- *
- * \ingroup callbacks
- *
- * Callbacks set by the user receive a user-set pointer to a context
- * structure. The user can wrap this struct in a bigger context struct
- * and use wimaxll_container_of() during the callback to obtain its
- * pointer.
- *
- * Usage:
- *
- * \code
- * ...
- * struct wimaxll_handle *wmx;
- * ...
- * struct my_context {
- *         struct wimaxll_gnl_cb_context ctx;
- *         <my data>
- * } my_ctx = {
- *        .ctx = WIMAXLL_GNL_CB_CONTEXT_INIT(wmx),
- *        <my data initialization>
- * };
- * ...
- * wimaxll_set_cb_SOMECALLBACK(wmx, my_callback, &my_ctx.ctx);
- * ...
- * result = wimaxll_pipe_read(wmx);
- * ...
- *
- * // When my_callback() is called
- * my_callback(wmx, ctx, ...)
- * {
- *         struct my_context *my_ctx = wimaxll_container_of(
- *                ctx, struct my_callback, ctx);
- *         ...
- *         // do stuff with my_ctx
- * }
- * \endcode
- *
- * \param wmx WiMAX handle this context refers to (for usage by the
- *     callback).
- * \param result Result of the handling of the message. For usage by
- *     the callback. Should not be set to -EINPROGRESS, as this will
- *     be interpreted by the message handler as no processing was done
- *     on the message.
- *
- * \internal
- *
- * \param msg_done This is used internally to mark when the acks (or
- *     errors) for a message have been received and the message
- *     receiving loop can be considered done.
- */
-struct wimaxll_gnl_cb_context {
-	struct wimaxll_handle *wmx;
-	ssize_t result;
-	unsigned msg_done:1;	/* internal */
-};
-
-
-/**
- * Initialize a definition of struct wimaxll_gnl_cb_context
- *
- * \param _wmx pointer to the WiMAX device handle this will be
- *     associated to
- *
- * Use as:
- *
- * \code
- * struct wimaxll_handle *wmx;
- * ...
- * struct wimaxll_gnl_cb_context my_context = WIMAXLL_GNL_CB_CONTEXT_INIT(wmx);
- * \endcode
- *
- * \ingroup callbacks
- */
-#define WIMAXLL_GNL_CB_CONTEXT_INIT(_wmx) {	\
-	.wmx = (_wmx),				\
-	.result = -EINPROGRESS,			\
-}
-
-
-static inline	// ugly workaround for doxygen
-/**
- * Initialize a struct wimaxll_gnl_cb_context
- *
- * \param ctx Pointer to the struct wimaxll_gnl_cb_context.
- * \param wmx pointer to the WiMAX device handle this will be
- *     associated to
- *
- * Use as:
- *
- * \code
- * struct wimaxll_handle *wmx;
- * ...
- * struct wimaxll_gnl_cb_context my_context;
- * ...
- * wimaxll_gnl_cb_context(&my_context, wmx);
- * \endcode
- *
- * \ingroup callbacks
- * \fn static void wimaxll_gnl_cb_context_init(struct wimaxll_gnl_cb_context *ctx, struct wimaxll_handle *wmx)
- */
-void wimaxll_gnl_cb_context_init(struct wimaxll_gnl_cb_context *ctx,
-				 struct wimaxll_handle *wmx)
-{
-	ctx->wmx = wmx;
-	ctx->result = -EINPROGRESS;
-}
-
-
-static inline	// ugly workaround for doxygen
-/**
- * Set the result value in a callback context
- *
- * \param ctx Context where to set -- if NULL, no action will be taken
- * \param val value to set for \a result
- *
- * \ingroup callbacks
- * \fn static void wimaxll_cb_maybe_set_result(struct wimaxll_gnl_cb_context *ctx, int val)
- */
-void wimaxll_cb_maybe_set_result(struct wimaxll_gnl_cb_context *ctx, int val)
-{
-	if (ctx != NULL && ctx->result == -EINPROGRESS)
-		ctx->result = val;
-}
 
 
 /* Basic handle management */
@@ -458,11 +316,9 @@ ssize_t wimaxll_msg_write(struct wimaxll_handle *, const char *,
 			  const void *, size_t);
 
 void wimaxll_get_cb_msg_to_user(struct wimaxll_handle *,
-				wimaxll_msg_to_user_cb_f *,
-				struct wimaxll_gnl_cb_context **);
+				wimaxll_msg_to_user_cb_f *, void **);
 void wimaxll_set_cb_msg_to_user(struct wimaxll_handle *,
-				wimaxll_msg_to_user_cb_f,
-				struct wimaxll_gnl_cb_context *);
+				wimaxll_msg_to_user_cb_f, void *);
 
 #define WIMAX_PIPE_ANY (NULL-1)
 ssize_t wimaxll_msg_read(struct wimaxll_handle *, const char *pine_name,
@@ -475,10 +331,10 @@ int wimaxll_reset(struct wimaxll_handle *);
 
 void wimaxll_get_cb_state_change(
 	struct wimaxll_handle *, wimaxll_state_change_cb_f *,
-	struct wimaxll_gnl_cb_context **);
+	void **);
 void wimaxll_set_cb_state_change(
 	struct wimaxll_handle *, wimaxll_state_change_cb_f,
-	struct wimaxll_gnl_cb_context *);
+	void *);
 ssize_t wimaxll_wait_for_state_change(struct wimaxll_handle *wmx,
 				      enum wimax_st *old_state,
 				      enum wimax_st *new_state);

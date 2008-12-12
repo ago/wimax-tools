@@ -113,11 +113,19 @@ static
  * In wimaxll_recv(), -ENODATA is considered a retryable error --
  * effectively, the message is skipped.
  *
+ * The wimaxll_gnl_handle_*() functions need to return:
+ *
+ * - >= 0 to indicate message processing should continue
+ * - -EBUSY to indicate message processing should stop
+ * - any other < 0 error code to indicate an error and that the
+ *   message should be skipped.
+ *
  * \fn int wimaxll_gnl_cb(struct nl_msg *msg, void *_ctx)
  */
 int wimaxll_gnl_cb(struct nl_msg *msg, void *_ctx)
 {
 	ssize_t result;
+	enum nl_cb_action result_nl;
 	struct wimaxll_gnl_cb_context *ctx = _ctx;
 	struct wimaxll_handle *wmx = ctx->wmx;
 	struct nlmsghdr *nl_hdr;
@@ -134,33 +142,31 @@ int wimaxll_gnl_cb(struct nl_msg *msg, void *_ctx)
 		if (wmx->msg_to_user_cb)
 			result = wimaxll_gnl_handle_msg_to_user(wmx, msg);
 		else
-			goto out_no_handler;
+			result = -ENODATA;
 		break;
 	case WIMAX_GNL_RE_STATE_CHANGE:
 		if (wmx->state_change_cb)
 			result = wimaxll_gnl_handle_state_change(wmx, msg);
 		else
-			goto out_no_handler;
+			result = -ENODATA;
 		break;
 	default:
-		goto error_unknown_msg;
+		d_printf(3, wmx, "E: %s: received unknown gnl message %d\n",
+			 __func__, gnl_hdr->cmd);
+		result = -ENODATA;
 	}
-	if (result == NL_STOP)
-		wimaxll_cb_maybe_set_result(ctx, 0);
+	if (result == -EBUSY) {		/* stop signal from the user's callback */
+		result_nl = NL_STOP;
+		result = 0;
+	}
+	else if (result < 0)
+		result_nl = NL_SKIP;
+	else
+		result_nl = NL_OK;
+	wimaxll_cb_maybe_set_result(ctx, result);	
 	d_fnend(3, wmx, "(msg %p ctx %p) = %zd\n", msg, ctx, result);
-	return result;
-
-error_unknown_msg:
-	d_printf(3, wmx, "E: %s: received unknown gnl message %d\n",
-		 __func__, gnl_hdr->cmd);
-out_no_handler:
-	wimaxll_cb_maybe_set_result(ctx, -ENODATA);
-	result = NL_SKIP;
-	d_fnend(3, wmx, "(msg %p ctx %p) = %zd\n", msg, ctx, result);
-	return result;
+	return result_nl;
 }
-
-
 
 
 /**

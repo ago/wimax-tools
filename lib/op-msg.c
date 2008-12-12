@@ -142,7 +142,7 @@ struct nla_policy wimaxll_gnl_msg_from_user_policy[WIMAX_GNL_ATTR_MAX + 1] = {
  * \param wmx WiMAX device handle
  * \param mch Pointer to \c struct wimaxll_mc_handle
  * \param msg Pointer to netlink message
- * \return \c enum nl_cb_action
+ * \return 0 if ok, < 0 errno code on error
  *
  * wimaxll_recv() calls libnl's nl_recvmsgs() to receive messages;
  * when a valid message is received, wimax_gnl__cb() that selects a
@@ -161,7 +161,6 @@ int wimaxll_gnl_handle_msg_to_user(struct wimaxll_handle *wmx,
 	struct nlmsghdr *nl_hdr;
 	struct genlmsghdr *gnl_hdr;
 	struct nlattr *tb[WIMAX_GNL_ATTR_MAX+1];
-	struct wimaxll_gnl_cb_context *ctx = wmx->msg_to_user_context;
 	const char *pipe_name;
 	void *data;
 
@@ -177,29 +176,24 @@ int wimaxll_gnl_handle_msg_to_user(struct wimaxll_handle *wmx,
 	if (result < 0) {
 		wimaxll_msg(wmx, "E: %s: genlmsg_parse() failed: %d\n",
 			  __func__, result);
-		wimaxll_cb_maybe_set_result(ctx, result);
-		result = NL_SKIP;
 		goto error_parse;
 	}
 	/* Find if the message is for the interface wmx represents */
 	if (tb[WIMAX_GNL_MSG_IFIDX] == NULL) {
 		wimaxll_msg(wmx, "E: %s: cannot find IFIDX attribute\n",
 			    __func__);
-		wimaxll_cb_maybe_set_result(ctx, -ENODEV);
-		result = NL_SKIP;
+		result = -EINVAL;
 		goto error_no_attrs;
-
 	}
 	if (wmx->ifidx != nla_get_u32(tb[WIMAX_GNL_MSG_IFIDX])) {
-		result = NL_SKIP;
+		result = -ENODEV;
 		goto error_no_attrs;
 	}
 	/* Extract marshalled arguments */
 	if (tb[WIMAX_GNL_MSG_DATA] == NULL) {
 		wimaxll_msg(wmx, "E: %s: cannot find MSG_DATA attribute\n",
 			  __func__);
-		wimaxll_cb_maybe_set_result(ctx, -ENXIO);
-		result = NL_SKIP;
+		result = -ENXIO;
 		goto error_no_attrs;
 
 	}
@@ -218,11 +212,8 @@ int wimaxll_gnl_handle_msg_to_user(struct wimaxll_handle *wmx,
 	d_dump(2, wmx, data, size);
 
 	/* Now execute the callback for handling msg-to-user */
-	result = wmx->msg_to_user_cb(wmx, ctx, pipe_name, data, size);
-	if (result == -EBUSY)
-		result = NL_STOP;
-	else
-		result = NL_OK;
+	result = wmx->msg_to_user_cb(wmx, wmx->msg_to_user_priv,
+				     pipe_name, data, size);
 error_no_attrs:
 error_not_for_us:
 error_parse:
@@ -246,11 +237,12 @@ struct wimaxll_cb_msg_to_user_context {
  */
 static
 int wimaxll_msg_read_cb(struct wimaxll_handle *wmx,
-			struct wimaxll_gnl_cb_context *ctx,
+			void *_ctx,
 			const char *pipe_name,
 			const void *data, size_t data_size)
 {
 	int result;
+	struct wimaxll_gnl_cb_context *ctx = _ctx;
 	struct wimaxll_cb_msg_to_user_context *mtu_ctx =
 		wimaxll_container_of(
 			ctx, struct wimaxll_cb_msg_to_user_context, ctx);
@@ -343,7 +335,7 @@ ssize_t wimaxll_msg_read(struct wimaxll_handle *wmx,
 		.data = (void *) pipe_name,
 	};
 	wimaxll_msg_to_user_cb_f prev_cb = NULL;
-	struct wimaxll_gnl_cb_context *prev_priv = NULL;
+	void *prev_priv = NULL;
 
 	d_fnstart(3, wmx, "(wmx %p pipe_name %s, buf %p)\n",
 		  wmx, pipe_name, buf);
@@ -465,17 +457,17 @@ error_msg_alloc:
  *
  * \param wmx WiMAX handle.
  * \param cb Where to store the current callback function.
- * \param context Where to store the private data pointer passed to the
+ * \param priv Where to store the private data pointer passed to the
  *     callback.
  *
  * \ingroup the_messaging_interface_group
  */
 void wimaxll_get_cb_msg_to_user(
 	struct wimaxll_handle *wmx, wimaxll_msg_to_user_cb_f *cb,
-	struct wimaxll_gnl_cb_context **context)
+	void **priv)
 {
 	*cb = wmx->msg_to_user_cb;
-	*context = wmx->msg_to_user_context;
+	*priv = wmx->msg_to_user_priv;
 }
 
 
@@ -487,7 +479,7 @@ void wimaxll_get_cb_msg_to_user(
  *
  * \param wmx WiMAX handle.
  * \param cb Callback function to set
- * \param context Private data pointer to pass to the callback
+ * \param priv Private data pointer to pass to the callback
  *     function (wrap a \a struct wimaxll_gnl_cb_context in your context
  *     struct and pass a pointer to it; then use wimaxll_container_of()
  *     to extract it back).
@@ -496,8 +488,8 @@ void wimaxll_get_cb_msg_to_user(
  */
 void wimaxll_set_cb_msg_to_user(
 	struct wimaxll_handle *wmx, wimaxll_msg_to_user_cb_f cb,
-	struct wimaxll_gnl_cb_context *context)
+	void *priv)
 {
 	wmx->msg_to_user_cb = cb;
-	wmx->msg_to_user_context = context;
+	wmx->msg_to_user_priv = priv;
 }
