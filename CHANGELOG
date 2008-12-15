@@ -6,3 +6,16 @@ Changes in v1.3.96:
 
  - Remove deprecated libwimax interface, all clients should have moved
    to libwimaxll.
+
+Changes in v1.3.97:
+
+ - Move to use a single WiMAX family for all the adapters (following
+   the kernel as requested by the community). Interfaces are now
+   addresed with an attribute indicating the interface index.
+
+Changes in v1.3.98:
+
+ - Make callbacks seen by the user take a void pointer instead of an
+   specific type that has to be wrapped.
+
+ - Namespace cleanups.
