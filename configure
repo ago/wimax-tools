@@ -1506,10 +1506,15 @@ Optional Packages:
   --with-libnl1           prefix to libnl (>=1.0-pre7) installation; defaults
                           to whichever is found in the system with pkg-config.
                           USE ABSOLUTE PATHS.
-  --with-i2400m           path to the Linux kernel WiMAX stack and i2400m
-                          driver sources; defaults to whatever is specified in
-                          the environment variable I2400M (will be
-                          deprecated). USE ABSOLUTE PATHS.
+  --with-linux            path to the Linux kernel headers/source (containing
+                          the definitions for the WiMAX stack); defaults to
+                          what is installed in your system's
+                          /usr/include/linux. USE ABSOLUTE PATHS.
+  --with-i2400m           path to the Linux kernel headers/source (containing
+                          the definitions for the WiMAX stack); defaults to
+                          what is installed in your system's
+                          /usr/include/linux. DEPRECATED: this option will be
+                          removed soon. USE ABSOLUTE PATHS.
 
 Some influential environment variables:
   CC          C compiler command
@@ -4460,7 +4465,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 4463 "configure"' > conftest.$ac_ext
+  echo '#line 4468 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7517,11 +7522,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7520: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7525: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7524: \$? = $ac_status" >&5
+   echo "$as_me:7529: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7807,11 +7812,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7810: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7815: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7814: \$? = $ac_status" >&5
+   echo "$as_me:7819: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7911,11 +7916,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7914: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7919: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:7918: \$? = $ac_status" >&5
+   echo "$as_me:7923: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10288,7 +10293,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10291 "configure"
+#line 10296 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10388,7 +10393,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10391 "configure"
+#line 10396 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12789,11 +12794,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12792: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12797: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:12796: \$? = $ac_status" >&5
+   echo "$as_me:12801: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -12893,11 +12898,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12896: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12901: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:12900: \$? = $ac_status" >&5
+   echo "$as_me:12905: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -14491,11 +14496,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14494: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14499: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14498: \$? = $ac_status" >&5
+   echo "$as_me:14503: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14595,11 +14600,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14598: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14603: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14602: \$? = $ac_status" >&5
+   echo "$as_me:14607: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -16815,11 +16820,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:16818: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:16823: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:16822: \$? = $ac_status" >&5
+   echo "$as_me:16827: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -17105,11 +17110,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:17108: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:17113: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:17112: \$? = $ac_status" >&5
+   echo "$as_me:17117: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -17209,11 +17214,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:17212: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:17217: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:17216: \$? = $ac_status" >&5
+   echo "$as_me:17221: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -20244,33 +20249,31 @@ echo "${ECHO_T}Using libnl1 from $libnl1_prefix" >&6; }
 
 
 
-# i2400m driver and wimax stack
+# Linux WiMAX stack
+LINUX_KERNEL=/usr
+
+# Check whether --with-linux was given.
+if test "${with_linux+set}" = set; then
+  withval=$with_linux;
+                LINUX_KERNEL="$withval"
+
+fi
+
+# Old, for backwards compat
 
 # Check whether --with-i2400m was given.
 if test "${with_i2400m+set}" = set; then
   withval=$with_i2400m;
-                I2400M="$withval"
-
-else
-
-                if test -z "$I2400M"
-                then
-                        { { echo "$as_me:$LINENO: error: WiMAX stack and i2400m driver are required, please install
-                                     and specify location with --with-i2400m" >&5
-echo "$as_me: error: WiMAX stack and i2400m driver are required, please install
-                                     and specify location with --with-i2400m" >&2;}
-   { (exit 1); exit 1; }; }
-                fi
+                LINUX_KERNEL="$withval"
 
 fi
 
-{ echo "$as_me:$LINENO: result: Using WiMAX stack and i2400m driver from $withval" >&5
-echo "${ECHO_T}Using WiMAX stack and i2400m driver from $withval" >&6; }
+{ echo "$as_me:$LINENO: result: Using Linux WiMAX stack from $LINUX_KERNEL" >&5
+echo "${ECHO_T}Using Linux WiMAX stack from $LINUX_KERNEL" >&6; }
 
-
-as_ac_File=`echo "ac_cv_file_$I2400M/include/linux/wimax.h" | $as_tr_sh`
-{ echo "$as_me:$LINENO: checking for $I2400M/include/linux/wimax.h" >&5
-echo $ECHO_N "checking for $I2400M/include/linux/wimax.h... $ECHO_C" >&6; }
+as_ac_File=`echo "ac_cv_file_$LINUX_KERNEL/include/linux/wimax.h" | $as_tr_sh`
+{ echo "$as_me:$LINENO: checking for $LINUX_KERNEL/include/linux/wimax.h" >&5
+echo $ECHO_N "checking for $LINUX_KERNEL/include/linux/wimax.h... $ECHO_C" >&6; }
 if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
@@ -20278,7 +20281,7 @@ else
   { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
 echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
    { (exit 1); exit 1; }; }
-if test -r "$I2400M/include/linux/wimax.h"; then
+if test -r "$LINUX_KERNEL/include/linux/wimax.h"; then
   eval "$as_ac_File=yes"
 else
   eval "$as_ac_File=no"
@@ -20294,8 +20297,8 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 else
-  { { echo "$as_me:$LINENO: error: Can't locate include/linux/wimax.h in the path specified with --with-i2400m" >&5
-echo "$as_me: error: Can't locate include/linux/wimax.h in the path specified with --with-i2400m" >&2;}
+  { { echo "$as_me:$LINENO: error: Can't locate include/linux/wimax.h in $LINUX_KERNEL" >&5
+echo "$as_me: error: Can't locate include/linux/wimax.h in $LINUX_KERNEL" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -20304,7 +20307,7 @@ fi
 #
 # To make sure it works during cross compiles, we extract by hand the
 # value of WIMAX_GNL_VERSION.
-wimax_h=${I2400M}/include/linux/wimax.h
+wimax_h=${LINUX_KERNEL}/include/linux/wimax.h
 wimax_gnl_version=$(grep '^[[:space:]]*WIMAX_GNL_VERSION[[:space:]]*=[[:space:]]*[0-9]\+,$' $wimax_h \
      | sed 's/^[[:space:]]*WIMAX_GNL_VERSION[[:space:]]*=[[:space:]]*\([0-9]\+\),$/\1/')
 wimax_gnl_vmajor=$(($wimax_gnl_version / 10))
@@ -20324,7 +20327,7 @@ echo "$as_me: error: WiMAX kernel support has minor version $wimax_gnl_vminor, t
    { (exit 1); exit 1; }; }
 fi
 
-I2400M_INCLUDES="-I${I2400M}/include"
+I2400M_INCLUDES="-I${LINUX_KERNEL}/include"
 
 
 

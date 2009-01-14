@@ -72,34 +72,39 @@ AC_MSG_RESULT(Using libnl1 from $libnl1_prefix)
 AC_SUBST(LIBNL1_CFLAGS)
 AC_SUBST(LIBNL1_LIBS)
 
-# i2400m driver and wimax stack
+# Linux WiMAX stack
+LINUX_KERNEL=/usr
+AC_ARG_WITH(linux,
+            AC_HELP_STRING([--with-linux],
+			   [path to the Linux kernel headers/source (containing the 
+                            definitions for the WiMAX stack); defaults to what
+                            is installed in your system's /usr/include/linux. 
+                            USE ABSOLUTE PATHS.]),
+            [
+                LINUX_KERNEL="$withval"
+            ])
+# Old, for backwards compat
 AC_ARG_WITH(i2400m,
             AC_HELP_STRING([--with-i2400m],
-			   [path to the Linux kernel WiMAX stack and i2400m driver
-                            sources; defaults to whatever is specified in the environment
-                            variable I2400M (will be deprecated). USE ABSOLUTE PATHS.]),
+			   [path to the Linux kernel headers/source (containing the 
+                            definitions for the WiMAX stack); defaults to what
+                            is installed in your system's /usr/include/linux. 
+                            DEPRECATED: this option will be removed soon.
+                            USE ABSOLUTE PATHS.]),
             [
-                I2400M="$withval"
-            ],
-            [
-                if test -z "$I2400M"
-                then
-                        AC_MSG_ERROR([WiMAX stack and i2400m driver are required, please install
-                                     and specify location with --with-i2400m])
-                fi
+                LINUX_KERNEL="$withval"
             ])
-AC_MSG_RESULT(Using WiMAX stack and i2400m driver from $withval)
+AC_MSG_RESULT(Using Linux WiMAX stack from $LINUX_KERNEL)
 
-
-AC_CHECK_FILE([$I2400M/include/linux/wimax.h],
+AC_CHECK_FILE([$LINUX_KERNEL/include/linux/wimax.h],
                 [AC_DEFINE([HAVE_WIMAX_H], 1, [Define to 1 if you have <linux/wimax.h>.])],
-                [AC_MSG_ERROR([Can't locate include/linux/wimax.h in the path specified with --with-i2400m])])
+                [AC_MSG_ERROR([Can't locate include/linux/wimax.h in $LINUX_KERNEL])])
 
 # Dirty (as in very dirty) version compatibility check
 #
 # To make sure it works during cross compiles, we extract by hand the
 # value of WIMAX_GNL_VERSION.
-wimax_h=${I2400M}/include/linux/wimax.h
+wimax_h=${LINUX_KERNEL}/include/linux/wimax.h
 wimax_gnl_version=[$(grep '^[[:space:]]*WIMAX_GNL_VERSION[[:space:]]*=[[:space:]]*[0-9]\+,$' $wimax_h \
      | sed 's/^[[:space:]]*WIMAX_GNL_VERSION[[:space:]]*=[[:space:]]*\([0-9]\+\),$/\1/')]
 wimax_gnl_vmajor=$(($wimax_gnl_version / 10))
@@ -115,7 +120,7 @@ then
         AC_MSG_ERROR([WiMAX kernel support has minor version $wimax_gnl_vminor, this software needs at least $need_vminor])
 fi
 
-AC_SUBST(I2400M_INCLUDES,"-I${I2400M}/include")
+AC_SUBST(I2400M_INCLUDES,"-I${LINUX_KERNEL}/include")
 
 
 AC_OUTPUT(Makefile
