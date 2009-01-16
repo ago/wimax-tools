@@ -283,6 +283,7 @@ int wimaxll_gnl_resolve(struct wimaxll_handle *wmx)
 	wmx->ifidx = if_nametoindex(wmx->name);
 	if (wmx->ifidx == 0) {
 		wimaxll_msg(wmx, "E: device %s does not exist\n", wmx->name);
+		result = -ENODEV;
 		goto error_no_dev;
 	}
 	result = genl_ctrl_resolve(wmx->nlh_tx, "WiMAX");
