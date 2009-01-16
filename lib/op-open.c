@@ -297,7 +297,15 @@ int wimaxll_gnl_resolve(struct wimaxll_handle *wmx)
 	wmx->gnl_family_id = result;
 	d_printf(1, wmx, "D: WiMAX device %s, genl family ID %d\n",
 		 wmx->name, wmx->gnl_family_id);
+	wmx->mcg_id = -1;
 	nl_get_multicast_groups(wmx->nlh_tx, "WiMAX", wimaxll_mc_group_cb, wmx);
+	if (wmx->mcg_id == -1) {
+		wimaxll_msg(wmx, "E: %s: cannot resolve multicast group ID; "
+			  "your kernel might be too old (< 2.6.23).\n",
+			  wmx->name);
+		result = -ENXIO;
+		goto error_mcg_resolve;
+	}
 
 	version = genl_ctrl_get_version(wmx->nlh_tx, "WiMAX");
 	/* Check version compatibility -- check include/linux/wimax.h
@@ -317,6 +325,7 @@ int wimaxll_gnl_resolve(struct wimaxll_handle *wmx)
 			    "version (%d) is lower that supported %d; things "
 			    "might not work\n", minor, WIMAX_GNL_VERSION % 10);
 error_bad_major:
+error_mcg_resolve:
 error_ctrl_resolve:
 error_no_dev:
 	d_fnend(5, wmx, "(wmx %p) = %d\n", wmx, result);
