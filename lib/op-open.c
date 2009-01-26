@@ -250,7 +250,7 @@ ssize_t wimaxll_recv(struct wimaxll_handle *wmx)
 	} while ((ctx.result == -EINPROGRESS || ctx.result == -ENODATA)
 		 && result >= 0);
 	if (result < 0)
-		wimaxll_msg(wmx, "E: %s: nl_recvmgsgs failed: %d\n",
+		wimaxll_msg(wmx, "E: %s: nl_recvmgsgs failed: %zd\n",
 			    __func__, result);
 	else
 		result = ctx.result;

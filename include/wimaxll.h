@@ -309,7 +309,7 @@ const char *wimaxll_ifname(const struct wimaxll_handle *);
 
 /* Wait for data from the kernel, execute callbacks */
 int wimaxll_recv_fd(struct wimaxll_handle *);
-int wimaxll_recv(struct wimaxll_handle *);
+ssize_t wimaxll_recv(struct wimaxll_handle *);
 
 /* Default (bidirectional) message pipe from the kernel */
 ssize_t wimaxll_msg_write(struct wimaxll_handle *, const char *,
