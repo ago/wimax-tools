@@ -120,7 +120,7 @@ int wimaxll_rfkill(struct wimaxll_handle *wmx, enum wimax_rf_state state)
 	}
 	/* Read the message ACK from netlink */
 	result = wimaxll_wait_for_ack(wmx);
-	if (result < 0)
+	if (result < 0 && result != -ENODEV)
 		wimaxll_msg(wmx, "E: RFKILL: operation failed: %zd\n", result);
 error_msg_prep:
 error_msg_send:

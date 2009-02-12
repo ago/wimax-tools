@@ -421,9 +421,20 @@ struct wimaxll_handle *wimaxll_open(const char *device)
 			    wmx->mcg_id, result);
 		goto error_nl_add_membership;
 	}
+	/* Now we check if the device is a WiMAX supported device, by
+	 * just querying for the RFKILL status. If this is not a WiMAX
+	 * device, it will fail with -ENODEV. */
+	result = wimaxll_rfkill(wmx, WIMAX_RF_QUERY);
+	if (result == -ENODEV) {
+		wimaxll_msg(wmx, "E: device %s is not a WiMAX device; or "
+			  "supports an interface unknown to libwimaxll: %d\n",
+			  wmx->name, result);
+		goto error_rfkill;
+	}
 	d_fnend(3, wmx, "(device %s) = %p\n", device, wmx);
 	return wmx;
 
+error_rfkill:
 error_nl_add_membership:
 error_gnl_resolve:
 	nl_close(wmx->nlh_rx);
