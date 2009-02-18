@@ -1,0 +1,70 @@
+#! /bin/sh
+#
+# Copyright (C) 2009 Intel Corporation <linux-wimax@intel.com>
+# Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301, USA.
+#
+#
+# See help for args
+#
+set -eua
+shopt -s extglob
+
+function log
+{
+    echo $@ 1>&2
+}
+
+if [ $# != 1 ]
+then
+    cat 1>&2 <<EOF
+E: bad arguments
+Usage: $(basename $0) REV
+
+This script generates a tar archive of the GIT tree with proper
+versioning information. 
+
+REV is a changeset id or (external) tag name for which the archive
+should be generated.
+
+Has to be run from inside the tree.
+EOF
+    exit 1
+fi
+
+tmpdir=`mktemp -d` 
+rev=$1
+name=${name:-wimax-tools}
+if ! desc=$(git describe --tags --always $rev)
+then
+    echo "E: can't describe revision specification $1"
+    exit 1
+fi
+if [ $rev = HEAD ]
+then
+    rev=$desc
+fi
+# Remove leading v from vM.m.p
+name_rev="$(echo "$rev" | sed '/^v[0-9]\+/s/^v//')"
+
+git archive --format=tar --prefix=$name-$name_rev/ $rev > $tmpdir/ar.tar
+mkdir $tmpdir/tree
+tar xf $tmpdir/ar.tar -C $tmpdir/tree
+echo $rev > $tmpdir/tree/$name-$name_rev/.git_archive.txt
+tar czf $name-$name_rev.tar.gz -C $tmpdir/tree .
+tar cjf $name-$name_rev.tar.bz2 -C $tmpdir/tree .
+rm -rf $tmpdir/
+

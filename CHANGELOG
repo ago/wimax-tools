@@ -1,3 +1,9 @@
+Changes in v1.4.1:
+
+ - Fail to open if the interface is not WiMAX
+
+ - Add mk-archive for preparing release tarballs
+
 Changes in v1.3.96:
 
  - Use the netlink controller for gaining multicast groups knowledge.
