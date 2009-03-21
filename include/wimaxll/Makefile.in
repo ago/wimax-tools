@@ -14,7 +14,6 @@
 
 @SET_MAKE@
 
-
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
@@ -33,57 +32,27 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = wimaxll-wait-for-state-change$(EXEEXT) \
-	wimaxll-rfkill$(EXEEXT) wimaxll-reset$(EXEEXT)
-subdir = bin
+subdir = include/wimaxll
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
-	$(srcdir)/wimax-tools-version.in
+	$(srcdir)/version.h.in $(wimaxllinclude_HEADERS)
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/config.h
-CONFIG_CLEAN_FILES = wimax-tools-version
-am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)"
-binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
-PROGRAMS = $(bin_PROGRAMS)
-wimaxll_reset_SOURCES = wimaxll-reset.c
-wimaxll_reset_OBJECTS = wimaxll-reset.$(OBJEXT)
-wimaxll_reset_LDADD = $(LDADD)
-am__DEPENDENCIES_1 =
-wimaxll_reset_DEPENDENCIES = ../lib/libwimaxll.la \
-	$(am__DEPENDENCIES_1)
-wimaxll_rfkill_SOURCES = wimaxll-rfkill.c
-wimaxll_rfkill_OBJECTS = wimaxll-rfkill.$(OBJEXT)
-wimaxll_rfkill_LDADD = $(LDADD)
-wimaxll_rfkill_DEPENDENCIES = ../lib/libwimaxll.la \
-	$(am__DEPENDENCIES_1)
-wimaxll_wait_for_state_change_SOURCES =  \
-	wimaxll-wait-for-state-change.c
-wimaxll_wait_for_state_change_OBJECTS =  \
-	wimaxll-wait-for-state-change.$(OBJEXT)
-wimaxll_wait_for_state_change_LDADD = $(LDADD)
-wimaxll_wait_for_state_change_DEPENDENCIES = ../lib/libwimaxll.la \
-	$(am__DEPENDENCIES_1)
-binSCRIPT_INSTALL = $(INSTALL_SCRIPT)
-SCRIPTS = $(bin_SCRIPTS)
-DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
-depcomp = $(SHELL) $(top_srcdir)/depcomp
-am__depfiles_maybe = depfiles
-COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
-	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-LTCOMPILE = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-CCLD = $(CC)
-LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
-SOURCES = wimaxll-reset.c wimaxll-rfkill.c \
-	wimaxll-wait-for-state-change.c
-DIST_SOURCES = wimaxll-reset.c wimaxll-rfkill.c \
-	wimaxll-wait-for-state-change.c
+CONFIG_CLEAN_FILES = version.h
+SOURCES =
+DIST_SOURCES =
+am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
+am__vpath_adj = case $$p in \
+    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
+    *) f=$$p;; \
+  esac;
+am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
+am__installdirs = "$(DESTDIR)$(wimaxllincludedir)"
+wimaxllincludeHEADERS_INSTALL = $(INSTALL_HEADER)
+HEADERS = $(wimaxllinclude_HEADERS)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -201,17 +170,13 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-INCLUDES = \
-	-I$(top_srcdir)/include \
-	-I$(top_builddir)/include \
-	$(I2400M_INCLUDES)
+wimaxllincludedir = @includedir@/wimaxll
+wimaxllinclude_HEADERS = \
+	version.h
 
-LDADD = ../lib/libwimaxll.la $(LIBNL1_LIBS)
-bin_SCRIPTS = wimax-tools-version
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .lo .o .obj
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -221,9 +186,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  bin/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  include/wimaxll/Makefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign  bin/Makefile
+	  $(AUTOMAKE) --foreign  include/wimaxll/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -241,101 +206,31 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
-wimax-tools-version: $(top_builddir)/config.status $(srcdir)/wimax-tools-version.in
+version.h: $(top_builddir)/config.status $(srcdir)/version.h.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-install-binPROGRAMS: $(bin_PROGRAMS)
-	@$(NORMAL_INSTALL)
-	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
-	@list='$(bin_PROGRAMS)'; for p in $$list; do \
-	  p1=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
-	  if test -f $$p \
-	     || test -f $$p1 \
-	  ; then \
-	    f=`echo "$$p1" | sed 's,^.*/,,;$(transform);s/$$/$(EXEEXT)/'`; \
-	   echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(binPROGRAMS_INSTALL) '$$p' '$(DESTDIR)$(bindir)/$$f'"; \
-	   $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(binPROGRAMS_INSTALL) "$$p" "$(DESTDIR)$(bindir)/$$f" || exit 1; \
-	  else :; fi; \
-	done
-
-uninstall-binPROGRAMS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(bin_PROGRAMS)'; for p in $$list; do \
-	  f=`echo "$$p" | sed 's,^.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/'`; \
-	  echo " rm -f '$(DESTDIR)$(bindir)/$$f'"; \
-	  rm -f "$(DESTDIR)$(bindir)/$$f"; \
-	done
-
-clean-binPROGRAMS:
-	@list='$(bin_PROGRAMS)'; for p in $$list; do \
-	  f=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
-	  echo " rm -f $$p $$f"; \
-	  rm -f $$p $$f ; \
-	done
-wimaxll-reset$(EXEEXT): $(wimaxll_reset_OBJECTS) $(wimaxll_reset_DEPENDENCIES) 
-	@rm -f wimaxll-reset$(EXEEXT)
-	$(LINK) $(wimaxll_reset_OBJECTS) $(wimaxll_reset_LDADD) $(LIBS)
-wimaxll-rfkill$(EXEEXT): $(wimaxll_rfkill_OBJECTS) $(wimaxll_rfkill_DEPENDENCIES) 
-	@rm -f wimaxll-rfkill$(EXEEXT)
-	$(LINK) $(wimaxll_rfkill_OBJECTS) $(wimaxll_rfkill_LDADD) $(LIBS)
-wimaxll-wait-for-state-change$(EXEEXT): $(wimaxll_wait_for_state_change_OBJECTS) $(wimaxll_wait_for_state_change_DEPENDENCIES) 
-	@rm -f wimaxll-wait-for-state-change$(EXEEXT)
-	$(LINK) $(wimaxll_wait_for_state_change_OBJECTS) $(wimaxll_wait_for_state_change_LDADD) $(LIBS)
-install-binSCRIPTS: $(bin_SCRIPTS)
-	@$(NORMAL_INSTALL)
-	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
-	@list='$(bin_SCRIPTS)'; for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  if test -f $$d$$p; then \
-	    f=`echo "$$p" | sed 's|^.*/||;$(transform)'`; \
-	    echo " $(binSCRIPT_INSTALL) '$$d$$p' '$(DESTDIR)$(bindir)/$$f'"; \
-	    $(binSCRIPT_INSTALL) "$$d$$p" "$(DESTDIR)$(bindir)/$$f"; \
-	  else :; fi; \
-	done
-
-uninstall-binSCRIPTS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(bin_SCRIPTS)'; for p in $$list; do \
-	  f=`echo "$$p" | sed 's|^.*/||;$(transform)'`; \
-	  echo " rm -f '$(DESTDIR)$(bindir)/$$f'"; \
-	  rm -f "$(DESTDIR)$(bindir)/$$f"; \
-	done
-
-mostlyclean-compile:
-	-rm -f *.$(OBJEXT)
-
-distclean-compile:
-	-rm -f *.tab.c
-
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wimaxll-reset.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wimaxll-rfkill.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wimaxll-wait-for-state-change.Po@am__quote@
-
-.c.o:
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(COMPILE) -c $<
-
-.c.obj:
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
-
-.c.lo:
-@am__fastdepCC_TRUE@	$(LTCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 
 mostlyclean-libtool:
 	-rm -f *.lo
 
 clean-libtool:
 	-rm -rf .libs _libs
+install-wimaxllincludeHEADERS: $(wimaxllinclude_HEADERS)
+	@$(NORMAL_INSTALL)
+	test -z "$(wimaxllincludedir)" || $(MKDIR_P) "$(DESTDIR)$(wimaxllincludedir)"
+	@list='$(wimaxllinclude_HEADERS)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f=$(am__strip_dir) \
+	  echo " $(wimaxllincludeHEADERS_INSTALL) '$$d$$p' '$(DESTDIR)$(wimaxllincludedir)/$$f'"; \
+	  $(wimaxllincludeHEADERS_INSTALL) "$$d$$p" "$(DESTDIR)$(wimaxllincludedir)/$$f"; \
+	done
+
+uninstall-wimaxllincludeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(wimaxllinclude_HEADERS)'; for p in $$list; do \
+	  f=$(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(wimaxllincludedir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(wimaxllincludedir)/$$f"; \
+	done
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
@@ -412,9 +307,9 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(PROGRAMS) $(SCRIPTS)
+all-am: Makefile $(HEADERS)
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)"; do \
+	for dir in "$(DESTDIR)$(wimaxllincludedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -443,13 +338,11 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
+clean-am: clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
-distclean-am: clean-am distclean-compile distclean-generic \
-	distclean-tags
+distclean-am: clean-am distclean-generic distclean-tags
 
 dvi: dvi-am
 
@@ -461,11 +354,11 @@ info: info-am
 
 info-am:
 
-install-data-am:
+install-data-am: install-wimaxllincludeHEADERS
 
 install-dvi: install-dvi-am
 
-install-exec-am: install-binPROGRAMS install-binSCRIPTS
+install-exec-am:
 
 install-html: install-html-am
 
@@ -480,14 +373,12 @@ install-ps: install-ps-am
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
 mostlyclean: mostlyclean-am
 
-mostlyclean-am: mostlyclean-compile mostlyclean-generic \
-	mostlyclean-libtool
+mostlyclean-am: mostlyclean-generic mostlyclean-libtool
 
 pdf: pdf-am
 
@@ -497,24 +388,23 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS
+uninstall-am: uninstall-wimaxllincludeHEADERS
 
 .MAKE: install-am install-strip
 
-.PHONY: CTAGS GTAGS all all-am check check-am clean clean-binPROGRAMS \
-	clean-generic clean-libtool ctags distclean distclean-compile \
-	distclean-generic distclean-libtool distclean-tags distdir dvi \
-	dvi-am html html-am info info-am install install-am \
-	install-binPROGRAMS install-binSCRIPTS install-data \
+.PHONY: CTAGS GTAGS all all-am check check-am clean clean-generic \
+	clean-libtool ctags distclean distclean-generic \
+	distclean-libtool distclean-tags distdir dvi dvi-am html \
+	html-am info info-am install install-am install-data \
 	install-data-am install-dvi install-dvi-am install-exec \
 	install-exec-am install-html install-html-am install-info \
 	install-info-am install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-binPROGRAMS \
-	uninstall-binSCRIPTS
+	install-ps install-ps-am install-strip \
+	install-wimaxllincludeHEADERS installcheck installcheck-am \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-generic mostlyclean-libtool pdf pdf-am \
+	ps ps-am tags uninstall uninstall-am \
+	uninstall-wimaxllincludeHEADERS
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

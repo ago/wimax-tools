@@ -2450,7 +2450,7 @@ am__tar='${AMTAR} chof - "$$tardir"'; am__untar='${AMTAR} xf -'
 
 
 
-ac_config_headers="$ac_config_headers lib/config.h"
+ac_config_headers="$ac_config_headers include/config.h"
 
 
 { echo "$as_me:$LINENO: checking whether to enable maintainer-specific portions of Makefiles" >&5
@@ -20331,7 +20331,7 @@ I2400M_INCLUDES="-I${LINUX_KERNEL}/include"
 
 
 
-ac_config_files="$ac_config_files Makefile doc/Makefile doc/doxygen.conf libwimaxll-0.pc libwimaxll-0-uninstalled.pc bin/Makefile bin/wimax-tools-version include/Makefile include/wimaxll-version.h lib/Makefile src/Makefile"
+ac_config_files="$ac_config_files Makefile doc/Makefile doc/doxygen.conf libwimaxll-0.pc libwimaxll-0-uninstalled.pc bin/Makefile bin/wimax-tools-version include/Makefile include/wimaxll-version.h include/wimaxll/Makefile include/wimaxll/version.h lib/Makefile src/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -20931,7 +20931,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF
 for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
-    "lib/config.h") CONFIG_HEADERS="$CONFIG_HEADERS lib/config.h" ;;
+    "include/config.h") CONFIG_HEADERS="$CONFIG_HEADERS include/config.h" ;;
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "doc/Makefile") CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
@@ -20942,6 +20942,8 @@ do
     "bin/wimax-tools-version") CONFIG_FILES="$CONFIG_FILES bin/wimax-tools-version" ;;
     "include/Makefile") CONFIG_FILES="$CONFIG_FILES include/Makefile" ;;
     "include/wimaxll-version.h") CONFIG_FILES="$CONFIG_FILES include/wimaxll-version.h" ;;
+    "include/wimaxll/Makefile") CONFIG_FILES="$CONFIG_FILES include/wimaxll/Makefile" ;;
+    "include/wimaxll/version.h") CONFIG_FILES="$CONFIG_FILES include/wimaxll/version.h" ;;
     "lib/Makefile") CONFIG_FILES="$CONFIG_FILES lib/Makefile" ;;
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
 
