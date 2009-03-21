@@ -68,6 +68,12 @@ wimaxll_pl_rfkill_la_OBJECTS = wimaxll-pl-rfkill.lo
 wimaxll_pl_rfkill_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(wimaxll_pl_rfkill_la_LDFLAGS) $(LDFLAGS) -o $@
+wimaxll_pl_wfsc_la_LIBADD =
+wimaxll_pl_wfsc_la_SOURCES = wimaxll-pl-wfsc.c
+wimaxll_pl_wfsc_la_OBJECTS = wimaxll-pl-wfsc.lo
+wimaxll_pl_wfsc_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(wimaxll_pl_wfsc_la_LDFLAGS) $(LDFLAGS) -o $@
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 wimaxll_SOURCES = wimaxll.c
@@ -108,11 +114,11 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = wimaxll-pl-reset.c wimaxll-pl-rfkill.c wimaxll.c \
-	wimaxll-reset.c wimaxll-rfkill.c \
+SOURCES = wimaxll-pl-reset.c wimaxll-pl-rfkill.c wimaxll-pl-wfsc.c \
+	wimaxll.c wimaxll-reset.c wimaxll-rfkill.c \
 	wimaxll-wait-for-state-change.c
-DIST_SOURCES = wimaxll-pl-reset.c wimaxll-pl-rfkill.c wimaxll.c \
-	wimaxll-reset.c wimaxll-rfkill.c \
+DIST_SOURCES = wimaxll-pl-reset.c wimaxll-pl-rfkill.c \
+	wimaxll-pl-wfsc.c wimaxll.c wimaxll-reset.c wimaxll-rfkill.c \
 	wimaxll-wait-for-state-change.c
 ETAGS = etags
 CTAGS = ctags
@@ -161,6 +167,7 @@ LIBNL1_LIBS = @LIBNL1_LIBS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
+LINUX_INCLUDE_PATH = @LINUX_INCLUDE_PATH@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
@@ -247,13 +254,15 @@ wimaxll_DEPENDENCIES = wimaxll.ver
 plugindir = $(pkglibdir)/plugins
 plugin_LTLIBRARIES = \
 	wimaxll-pl-reset.la	\
-	wimaxll-pl-rfkill.la
+	wimaxll-pl-rfkill.la	\
+	wimaxll-pl-wfsc.la
 
 plugin_LDFLAGS = -no-undefined -module -avoid-version \
 	-export-symbols-regex plugin
 
 wimaxll_pl_reset_la_LDFLAGS = $(plugin_LDFLAGS)
 wimaxll_pl_rfkill_la_LDFLAGS = $(plugin_LDFLAGS)
+wimaxll_pl_wfsc_la_LDFLAGS = $(plugin_LDFLAGS)
 all: all-am
 
 .SUFFIXES:
@@ -320,6 +329,8 @@ wimaxll-pl-reset.la: $(wimaxll_pl_reset_la_OBJECTS) $(wimaxll_pl_reset_la_DEPEND
 	$(wimaxll_pl_reset_la_LINK) -rpath $(plugindir) $(wimaxll_pl_reset_la_OBJECTS) $(wimaxll_pl_reset_la_LIBADD) $(LIBS)
 wimaxll-pl-rfkill.la: $(wimaxll_pl_rfkill_la_OBJECTS) $(wimaxll_pl_rfkill_la_DEPENDENCIES) 
 	$(wimaxll_pl_rfkill_la_LINK) -rpath $(plugindir) $(wimaxll_pl_rfkill_la_OBJECTS) $(wimaxll_pl_rfkill_la_LIBADD) $(LIBS)
+wimaxll-pl-wfsc.la: $(wimaxll_pl_wfsc_la_OBJECTS) $(wimaxll_pl_wfsc_la_DEPENDENCIES) 
+	$(wimaxll_pl_wfsc_la_LINK) -rpath $(plugindir) $(wimaxll_pl_wfsc_la_OBJECTS) $(wimaxll_pl_wfsc_la_LIBADD) $(LIBS)
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
@@ -388,6 +399,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wimaxll-pl-reset.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wimaxll-pl-rfkill.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wimaxll-pl-wfsc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wimaxll-reset.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wimaxll-rfkill.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wimaxll-wait-for-state-change.Po@am__quote@
@@ -604,7 +616,7 @@ uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
 
 
 wimaxll.exp: $(wimaxll_OBJECTS)
-	nm -B *.o | awk '{ print $$3 }' | sort -u | grep -E -e '^w_' > $@
+	nm -B *.o | awk '{ print $$3 }' | sort -u | grep -E -e '^(w|wimaxll)_' > $@
 
 wimaxll.ver: wimaxll.exp
 	echo "{ global:" > $@

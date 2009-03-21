@@ -22,7 +22,7 @@ wimaxll_LDFLAGS = $(AM_LDFLAGS) -ldl -Wl,--export-dynamic -Wl,--version-script=w
 wimaxll_DEPENDENCIES = wimaxll.ver
 
 wimaxll.exp: $(wimaxll_OBJECTS)
-	nm -B *.o | awk '{ print $$3 }' | sort -u | grep -E -e '^w_' > $@
+	nm -B *.o | awk '{ print $$3 }' | sort -u | grep -E -e '^(w|wimaxll)_' > $@
 
 wimaxll.ver: wimaxll.exp
 	echo "{ global:" > $@
@@ -32,10 +32,12 @@ wimaxll.ver: wimaxll.exp
 plugindir = $(pkglibdir)/plugins
 plugin_LTLIBRARIES =		\
 	wimaxll-pl-reset.la	\
-	wimaxll-pl-rfkill.la
+	wimaxll-pl-rfkill.la	\
+	wimaxll-pl-wfsc.la
 
 plugin_LDFLAGS = -no-undefined -module -avoid-version \
 	-export-symbols-regex plugin
 
 wimaxll_pl_reset_la_LDFLAGS = $(plugin_LDFLAGS)
 wimaxll_pl_rfkill_la_LDFLAGS = $(plugin_LDFLAGS)
+wimaxll_pl_wfsc_la_LDFLAGS = $(plugin_LDFLAGS)
