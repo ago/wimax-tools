@@ -1,0 +1,33 @@
+#! /bin/sh
+
+if [ $# = 0 ]
+then
+    cat 1>&2 <<EOF
+Usage: $(basename $0) ENUMPREFIX [FILES]
+EOF
+fi
+
+type="$1"
+shift
+
+cat <<EOF
+static
+const struct {
+	int value;
+	const char *name;
+} ${type}_names_vals[] = {
+EOF
+awk -vtype=$type -vtype_regex="^${type}_" '		\
+BEGIN { IGNORECASE = 1; }      				\
+$1 ~ type_regex {					\
+    name=$1;                            		\
+    symbol=$1;                            		\
+    type_regex="^" type "_";				\
+    gsub(/,.*$/, "", symbol);       			\
+    gsub(type_regex, "", name);       			\
+    gsub(/,.*$/, "", name);       			\
+    gsub(/_/, "-", name);               		\
+    print "\t{ " symbol ", \"" tolower(name) "\" },";	\
+}' $@
+echo "	{ 0, NULL }"
+echo "};"

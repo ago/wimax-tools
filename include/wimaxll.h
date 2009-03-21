@@ -346,6 +346,11 @@ ssize_t wimaxll_wait_for_state_change(struct wimaxll_handle *wmx,
 extern void (*wimaxll_vmsg)(const char *, va_list);
 void wimaxll_vmsg_stderr(const char *, va_list);
 
+enum wimax_st wimaxll_state_by_name(const char *);
+size_t wimaxll_states_snprintf(char *, size_t);
+const char * wimaxll_state_to_name(enum wimax_st);
+
+#define wimaxll_array_size(a) (sizeof(a)/sizeof(a[0]))
 
 static inline	// ugly hack for doxygen
 /**

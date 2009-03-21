@@ -16,6 +16,7 @@
 
 
 
+
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
@@ -56,23 +57,24 @@ LIBRARIES = $(lib_LIBRARIES)
 ARFLAGS = cru
 libwimaxll_a_AR = $(AR) $(ARFLAGS)
 libwimaxll_a_LIBADD =
-am__objects_1 = genl.$(OBJEXT) op-open.$(OBJEXT) op-msg.$(OBJEXT) \
-	op-reset.$(OBJEXT) op-rfkill.$(OBJEXT) \
+am__objects_1 = genl.$(OBJEXT) misc.$(OBJEXT) op-open.$(OBJEXT) \
+	op-msg.$(OBJEXT) op-reset.$(OBJEXT) op-rfkill.$(OBJEXT) \
 	re-state-change.$(OBJEXT) wimax.$(OBJEXT)
 am_libwimaxll_a_OBJECTS = $(am__objects_1)
 libwimaxll_a_OBJECTS = $(am_libwimaxll_a_OBJECTS)
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libwimaxll_la_LIBADD =
-am__objects_2 = libwimaxll_la-genl.lo libwimaxll_la-op-open.lo \
-	libwimaxll_la-op-msg.lo libwimaxll_la-op-reset.lo \
-	libwimaxll_la-op-rfkill.lo libwimaxll_la-re-state-change.lo \
-	libwimaxll_la-wimax.lo
+am__objects_2 = libwimaxll_la-genl.lo libwimaxll_la-misc.lo \
+	libwimaxll_la-op-open.lo libwimaxll_la-op-msg.lo \
+	libwimaxll_la-op-reset.lo libwimaxll_la-op-rfkill.lo \
+	libwimaxll_la-re-state-change.lo libwimaxll_la-wimax.lo
 am_libwimaxll_la_OBJECTS = $(am__objects_2)
 libwimaxll_la_OBJECTS = $(am_libwimaxll_la_OBJECTS)
 libwimaxll_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libwimaxll_la_CFLAGS) \
 	$(CFLAGS) $(libwimaxll_la_LDFLAGS) $(LDFLAGS) -o $@
+SCRIPTS = $(noinst_SCRIPTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -135,6 +137,7 @@ LIBNL1_LIBS = @LIBNL1_LIBS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
+LINUX_INCLUDE_PATH = @LINUX_INCLUDE_PATH@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
@@ -217,6 +220,7 @@ lib_LTLIBRARIES = libwimaxll.la
 lib_LIBRARIES = libwimaxll.a
 libwimaxll_sources = \
 	genl.c			\
+	misc.c			\
 	op-open.c		\
         op-msg.c		\
         op-reset.c		\
@@ -234,7 +238,15 @@ libwimaxll_la_CFLAGS = $(AM_CFLAGS)
 #      set to zero if removed existing interfaces
 libwimaxll_la_LDFLAGS = -version-info 1:0:0 $(LIBNL1_LIBS)
 libwimaxll_a_SOURCES = $(libwimaxll_sources)
-all: all-am
+BUILT_SOURCES = names-vals.h
+enum_names = \
+	wimax_st
+
+CLEANFILES = names-vals.h
+noinst_SCRIPTS = enum-to-names-vals
+EXTRA_DIST = $(noinst_SCRIPTS)
+all: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
 .SUFFIXES: .c .lo .o .obj
@@ -338,12 +350,14 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/genl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwimaxll_la-genl.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwimaxll_la-misc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwimaxll_la-op-msg.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwimaxll_la-op-open.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwimaxll_la-op-reset.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwimaxll_la-op-rfkill.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwimaxll_la-re-state-change.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwimaxll_la-wimax.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/misc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/op-msg.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/op-open.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/op-reset.Po@am__quote@
@@ -378,6 +392,13 @@ libwimaxll_la-genl.lo: genl.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='genl.c' object='libwimaxll_la-genl.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwimaxll_la_CFLAGS) $(CFLAGS) -c -o libwimaxll_la-genl.lo `test -f 'genl.c' || echo '$(srcdir)/'`genl.c
+
+libwimaxll_la-misc.lo: misc.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwimaxll_la_CFLAGS) $(CFLAGS) -MT libwimaxll_la-misc.lo -MD -MP -MF $(DEPDIR)/libwimaxll_la-misc.Tpo -c -o libwimaxll_la-misc.lo `test -f 'misc.c' || echo '$(srcdir)/'`misc.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libwimaxll_la-misc.Tpo $(DEPDIR)/libwimaxll_la-misc.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='misc.c' object='libwimaxll_la-misc.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwimaxll_la_CFLAGS) $(CFLAGS) -c -o libwimaxll_la-misc.lo `test -f 'misc.c' || echo '$(srcdir)/'`misc.c
 
 libwimaxll_la-op-open.lo: op-open.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwimaxll_la_CFLAGS) $(CFLAGS) -MT libwimaxll_la-op-open.lo -MD -MP -MF $(DEPDIR)/libwimaxll_la-op-open.Tpo -c -o libwimaxll_la-op-open.lo `test -f 'op-open.c' || echo '$(srcdir)/'`op-open.c
@@ -501,13 +522,15 @@ distdir: $(DISTFILES)
 	  fi; \
 	done
 check-am: all-am
-check: check-am
-all-am: Makefile $(LIBRARIES) $(LTLIBRARIES) $(HEADERS)
+check: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) check-am
+all-am: Makefile $(LIBRARIES) $(LTLIBRARIES) $(SCRIPTS) $(HEADERS)
 installdirs:
 	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(libdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
-install: install-am
+install: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) install-am
 install-exec: install-exec-am
 install-data: install-data-am
 uninstall: uninstall-am
@@ -524,6 +547,7 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -531,6 +555,7 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 clean: clean-am
 
 clean-am: clean-generic clean-libLIBRARIES clean-libLTLIBRARIES \
@@ -607,6 +632,14 @@ uninstall-am: uninstall-libLIBRARIES uninstall-libLTLIBRARIES
 	mostlyclean-libtool pdf pdf-am ps ps-am tags uninstall \
 	uninstall-am uninstall-libLIBRARIES uninstall-libLTLIBRARIES
 
+
+names-vals.h: @LINUX_INCLUDE_PATH@/linux/wimax.h enum-to-names-vals
+	rm -f $@
+	echo "#include <linux/wimax.h>" > $@
+	for type in $(enum_names); \
+	do \
+		$(srcdir)/enum-to-names-vals $$type $^; \
+	done  >> $@
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
