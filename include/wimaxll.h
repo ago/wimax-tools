@@ -304,6 +304,8 @@ typedef int (*wimaxll_state_change_cb_f)(
 
 /* Basic handle management */
 struct wimaxll_handle *wimaxll_open(const char *device_name);
+void *wimaxll_priv_get(struct wimaxll_handle *);
+void wimaxll_priv_set(struct wimaxll_handle *, void *);
 void wimaxll_close(struct wimaxll_handle *);
 const char *wimaxll_ifname(const struct wimaxll_handle *);
 

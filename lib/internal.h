@@ -201,6 +201,8 @@ void wimaxll_cb_maybe_set_result(struct wimaxll_cb_ctx *ctx, int val)
  *     the new device is discovered.
  * \param mcg_id Id of the 'msg' multicast group
  * \param name name of the wimax interface
+ * \param priv Private pointer set with wimaxll_priv_set() or other
+ *     accessors. Use wimaxll_priv_get() to access it.
  * \param nlh_tx handle for writing to the kernel.
  *     Internal note: You \b have \b to set the handlers for
  *     %NL_CB_VALID and nl_cb_err() callbacks, as each callsite will
@@ -216,6 +218,7 @@ struct wimaxll_handle {
 	unsigned ifidx;
 	int gnl_family_id, mcg_id;
 	char name[__WIMAXLL_IFNAME_LEN];
+	void *priv;
 
 	struct nl_handle *nlh_tx;
 	struct nl_handle *nlh_rx;

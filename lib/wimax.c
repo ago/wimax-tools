@@ -321,3 +321,34 @@ const char *wimaxll_ifname(const struct wimaxll_handle *wmx)
 {
 	return wmx->name;
 }
+
+
+/**
+ * Set the private data associated to a WiMAX device handle
+ *
+ * @param wmx WiMAX device handle
+ *
+ * @param priv Private data pointer to associate.
+ *
+ * @ingroup device_management
+ */
+void wimaxll_priv_set(struct wimaxll_handle *wmx, void *priv)
+{
+	wmx->priv = priv;
+}
+
+
+/**
+ * Return the private data associated to a WiMAX device handle
+ *
+ * @param wmx WiMAX device handle
+ *
+ * @returns pointer to priv data as set by wimaxll_priv_set() or
+ *     wimaxll_open_name() or wimaxll_open_ifindex().
+ *
+ * @ingroup device_management
+ */
+void * wimaxll_priv_get(struct wimaxll_handle *wmx)
+{
+	return wmx->priv;
+}
