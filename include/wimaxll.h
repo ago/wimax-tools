@@ -352,6 +352,13 @@ const char * wimaxll_state_to_name(enum wimax_st);
 
 #define wimaxll_array_size(a) (sizeof(a)/sizeof(a[0]))
 
+#define wimaxll_container_of(pointer, type, member)			\
+({									\
+	type *object = NULL;						\
+	size_t offset = (void *) &object->member - (void *) object;	\
+	(type *) ((void *) pointer - offset);				\
+})
+
 static inline	// ugly hack for doxygen
 /**
  *

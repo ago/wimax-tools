@@ -39,6 +39,10 @@
 
 #include <wimaxll.h>
 
+struct nl_msg;
+struct nlmsgerr;
+struct sockaddr_nl;
+
 enum {
 #define __WIMAXLL_IFNAME_LEN 32
 	/**
@@ -230,15 +234,6 @@ int wimaxll_gnl_handle_msg_to_user(struct wimaxll_handle *, struct nl_msg *);
 int wimaxll_gnl_handle_state_change(struct wimaxll_handle *, struct nl_msg *);
 int wimaxll_gnl_error_cb(struct sockaddr_nl *, struct nlmsgerr *, void *);
 int wimaxll_gnl_ack_cb(struct nl_msg *msg, void *_mch);
-
-
-#define wimaxll_container_of(pointer, type, member)			\
-({									\
-	type *object = NULL;						\
-	size_t offset = (void *) &object->member - (void *) object;	\
-	(type *) ((void *) pointer - offset);				\
-})
-
 
 /*
  * wimaxll_family_id - Return the associated Generic Netlink family ID
