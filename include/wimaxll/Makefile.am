@@ -1,3 +1,5 @@
 wimaxllincludedir = @includedir@/wimaxll
-wimaxllinclude_HEADERS = \
+wimaxllinclude_HEADERS = 	\
+	cmd.h			\
+	log.h			\
 	version.h

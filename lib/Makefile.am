@@ -6,10 +6,9 @@ INCLUDES = \
 
 noinst_HEADERS = debug.h internal.h
 
-lib_LTLIBRARIES = libwimaxll.la
-lib_LIBRARIES = libwimaxll.a
 libwimaxll_sources = 		\
 	genl.c			\
+	log.c			\
 	misc.c			\
 	op-open.c		\
         op-msg.c		\
@@ -26,8 +25,11 @@ libwimaxll_la_CFLAGS = $(AM_CFLAGS)
 # REVISION: inc for changes that do not affect the external interface
 # AGE: inc for added interfaces
 #      set to zero if removed existing interfaces
-libwimaxll_la_LDFLAGS = -version-info 1:0:0 $(LIBNL1_LIBS)
+libwimaxll_la_LDFLAGS = -version-info 1:0:1 $(LIBNL1_LIBS)
 libwimaxll_a_SOURCES = $(libwimaxll_sources)
+
+lib_LTLIBRARIES = libwimaxll.la
+lib_LIBRARIES = libwimaxll.a
 
 BUILT_SOURCES = names-vals.h
 

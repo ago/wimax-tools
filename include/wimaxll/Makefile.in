@@ -175,6 +175,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 wimaxllincludedir = @includedir@/wimaxll
 wimaxllinclude_HEADERS = \
+	cmd.h			\
+	log.h			\
 	version.h
 
 all: all-am
