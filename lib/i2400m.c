@@ -45,7 +45,9 @@
  *
  * When the callback from libwimaxll comes back with the response, if
  * it was a reply to said message, then the waiter for that is woken
- * up (using pthread mutexes and conditional variables).
+ * up (using pthread mutexes and conditional variables). See \ref
+ * cancellation for more information on what happens when the thread
+ * is cancelled.
  *
  * When a report is received, the report callback is called; care has
  * to be taken not to deadlock. See i2400m_report_cb().
@@ -102,6 +104,13 @@
  *
  * }
  * @endcode
+ *
+ * \section cancellation Thread cancellation
+ *
+ * All the code that takes mutexes pushes a cleanup handler that will
+ * unlock the mutex if the thread is cancelled. This is designed to
+ * work only with deferred thread cancellation models. Check POSIX for
+ * more information.
  */
 #include <wimaxll/i2400m.h>
 #include <pthread.h>
@@ -181,6 +190,8 @@ int i2400m_msg_to_user_cb(struct wimaxll_handle *wmx, void *_i2400m,
 		goto out;
 
 	mt = wimaxll_le16_to_cpu(hdr->type);
+	pthread_cleanup_push((void (*)(void *))pthread_mutex_unlock,
+			     &i2400m->mutex);
 	pthread_mutex_lock(&i2400m->mutex);
 	if (mt == i2400m->mt_pending) {
 		i2400m->mt_pending = I2400M_MT_INVALID;
@@ -192,6 +203,7 @@ int i2400m_msg_to_user_cb(struct wimaxll_handle *wmx, void *_i2400m,
 		pthread_cond_signal(&i2400m->cond);
 	}
 	pthread_mutex_unlock(&i2400m->mutex);
+	pthread_cleanup_pop(0);
 	/* this is ran outside of the lock because it doesn't need
 	 * much tracking info. */
 	if (mt & I2400M_MT_REPORT_MASK && i2400m->report_cb)
@@ -263,10 +275,13 @@ error_calloc:
  */
 void i2400m_destroy(struct i2400m *i2400m)
 {
+	pthread_cleanup_push((void (*)(void *))pthread_mutex_unlock,
+			     &i2400m->mutex);
 	pthread_mutex_lock(&i2400m->mutex);
 	i2400m->mt_result = -EINTR;
 	pthread_cond_broadcast(&i2400m->cond);
 	pthread_mutex_unlock(&i2400m->mutex);
+	pthread_cleanup_pop(0);
 	wimaxll_close(i2400m->wmx);
 	free(i2400m);
 }
@@ -345,6 +360,8 @@ int i2400m_msg_to_dev(struct i2400m *i2400m,
 	/* No need to check msg & payload consistency, the kernel will do for us */
 	/* Setup the completion, ack_skb ("we are waiting") and send
 	 * the message to the device */
+	pthread_cleanup_push((void (*)(void *))pthread_mutex_unlock,
+			     &i2400m->mutex);
 	pthread_mutex_lock(&i2400m->mutex);
 	i2400m->mt_pending = msg_type;
 	i2400m->mt_cb = cb;
@@ -361,6 +378,7 @@ int i2400m_msg_to_dev(struct i2400m *i2400m,
 error_msg_write:
 	i2400m->mt_pending = I2400M_MT_INVALID;
 	pthread_mutex_unlock(&i2400m->mutex);
+	pthread_cleanup_pop(0);
 	return result;
 }
 
