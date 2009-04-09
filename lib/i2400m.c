@@ -213,6 +213,21 @@ out:
 }
 
 
+static
+void __i2400m_create(struct i2400m *i2400m, 
+		    void *priv, i2400m_report_cb report_cb)
+{
+	pthread_mutex_init(&i2400m->mutex, NULL);
+	pthread_cond_init(&i2400m->cond, NULL);
+	i2400m->priv = priv;
+	i2400m->report_cb = report_cb;
+	i2400m->mt_pending = I2400M_MT_INVALID;
+
+	wimaxll_set_cb_msg_to_user(
+		i2400m->wmx, i2400m_msg_to_user_cb, i2400m);
+}
+
+
 /**
  * Create a i2400m handle
  *
@@ -246,20 +261,49 @@ int i2400m_create(struct i2400m **_i2400m, const char *ifname,
 		result = -errno;
 		goto error_open;
 	}
-	pthread_mutex_init(&i2400m->mutex, NULL);
-	pthread_cond_init(&i2400m->cond, NULL);
-	i2400m->priv = priv;
-	i2400m->report_cb = report_cb;
-	i2400m->mt_pending = I2400M_MT_INVALID;
-
-	wimaxll_set_cb_msg_to_user(
-		i2400m->wmx, i2400m_msg_to_user_cb, i2400m);
-
+	__i2400m_create(i2400m, priv, report_cb);
 	*_i2400m = i2400m;
 	return 0;
 
 error_open:
 	free(i2400m);
+error_calloc:
+	return result;
+}
+
+
+/**
+ * Create a i2400m handle from an existing WiMAX handle
+ *
+ * Creates a handle usable to execute commands and use the i2400m
+ * helpers.
+ *
+ * @param _i2400m where to store the handler value (pointer to
+ *     the descriptor).
+ *
+ * @param wmx WiMAX handle to use
+ *
+ * @param priv Pointer that the callbacks can recover from the
+ *     handle with i2400m_priv()
+ *
+ * @param report_cb Callback function called when a report arrives
+ *
+ * @ingroup i2400m_group
+ */
+int i2400m_create_from_handle(struct i2400m **_i2400m,
+			      struct wimaxll_handle *wmx,
+			      void *priv, i2400m_report_cb report_cb)
+{
+	int result = -ENOMEM;
+	struct i2400m *i2400m;
+
+	i2400m = calloc(sizeof(*i2400m), 1);
+	if (i2400m == NULL)
+		goto error_calloc;
+	i2400m->wmx = wmx;
+	__i2400m_create(i2400m, priv, report_cb);
+	*_i2400m = i2400m;
+	result = 0;
 error_calloc:
 	return result;
 }

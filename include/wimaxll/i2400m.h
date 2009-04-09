@@ -39,6 +39,7 @@
 #include <linux/wimax/i2400m.h>
 
 struct i2400m;
+struct wimaxll_handle;
 
 /*
  * Callback called by i2400m_msg_to_dev() when a reply to the executed
@@ -78,6 +79,8 @@ typedef void (*i2400m_report_cb)(
 	const struct i2400m_l3l4_hdr *l3l4, size_t l3l4_size);
 
 int i2400m_create(struct i2400m **, const char *, void *, i2400m_report_cb);
+int i2400m_create_from_handle(struct i2400m **, struct wimaxll_handle *,
+			      void *, i2400m_report_cb);
 void i2400m_destroy(struct i2400m *);
 int i2400m_msg_to_dev(struct i2400m *, const struct i2400m_l3l4_hdr *, size_t,
 		      i2400m_reply_cb, void *);
