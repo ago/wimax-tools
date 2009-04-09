@@ -176,7 +176,7 @@
  * @subsection diagnostics Controlling the ouput of diagnostics
  *
  * \e libwimaxll will output messages by default to \a stderr. See
- * \ref diagnostics_group for changing the default destination.
+ * \ref helper_log for changing the default destination.
  *
  * @subsection bytesex Endianess conversion
  *
@@ -341,13 +341,20 @@ ssize_t wimaxll_wait_for_state_change(struct wimaxll_handle *wmx,
 				      enum wimax_st *old_state,
 				      enum wimax_st *new_state);
 
+/*
+ * Basic diagnostics
+ *
+ * Deprecated, see wimaxll/log.h 
+ */
+extern void (*wimaxll_vmsg)(const char *, va_list)
+	__attribute__((deprecated));
+void wimaxll_vmsg_stderr(const char *, va_list)
+	__attribute__((deprecated));
+
 
 /**
  * \defgroup miscellaneous_group Miscellaneous utilities
  */
-extern void (*wimaxll_vmsg)(const char *, va_list);
-void wimaxll_vmsg_stderr(const char *, va_list);
-
 enum wimax_st wimaxll_state_by_name(const char *);
 size_t wimaxll_states_snprintf(char *, size_t);
 const char * wimaxll_state_to_name(enum wimax_st);

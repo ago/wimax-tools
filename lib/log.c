@@ -35,64 +35,241 @@
 #include <stdlib.h>
 #define W_VERBOSITY W_ERROR
 #include <wimaxll/log.h>
+#include "internal.h"
 
 
 /**
- * Log a message to (varargs version) if log level allows it
+ * Deliver \e libwimaxll diagnostics messages to \e stderr or \e stdout.
  *
- * \param level level of the messagve
- * \param current_level current logging level
- * \param tag a str to print along with \e line (if not NULL, its
- *     not printed).
- * \param line an integer to print along with \e tag (if \e tag is not
- *     NULL)
- * \param fmt printf-like format string
- * \param vargs arguments to \e fmt
+ * \param wmx WiMAX handle this message is related to 
+ * \param level Message level
+ * \param header Header for the message; the implementation must
+ *     decide if it has to be printed or not.
+ * \param fmt printf-like format
+ * \param vargs variable-argument list as created by
+ *     stdargs.h:va_list() that will be formatted according to \e
+ *     fmt.
  *
- * \internal
+ * Default diagnostics printing function. If the log level is
+ * "W_PRINT", we put it on stdout without a header, otherwise in
+ * stderr with header.
  *
- * Use w_*() functions only
- *
- * @ingroup: helper_log
+ * \ingroup helper_log
  */
-void __w_vmsg(unsigned level, unsigned current_level,
-	      const char *tag, unsigned line,
-	      const char *fmt, va_list vargs)
+void wimaxll_vlmsg_default(struct wimaxll_handle *wmx, unsigned level,
+			   const char *header, 
+			   const char *fmt, va_list vargs)
 {
-	FILE *f;
-	f = level != W_PRINT? stderr : stdout;
-	if (level <= current_level || level == W_PRINT) {
-		if (tag)
-			fprintf(f, "%s:%u: ", tag, line);
-		vfprintf(f, fmt, vargs);
+	FILE *f = level != W_PRINT? stderr : stdout;
+
+	/* Backwards compat */
+	if (wimaxll_vmsg) {
+		if (header)
+			wimaxll_vmsg(header, NULL);
+		wimaxll_vmsg(fmt, vargs);
+		return;
 	}
+	if (level == W_PRINT)
+		f = stdout;
+	else {
+		f = stderr;
+		fprintf(f, header);
+	}
+	vfprintf(f, fmt, vargs);
 }
 
 
 /**
- * Log a message to if log level allows it
+ * Print library diagnostics messages [backend]
  *
- * \param level level of the messagve
- * \param current_level current logging level
- * \param tag a str to print along with \e line (if not NULL, its
- *     not printed).
- * \param line an integer to print along with \e tag (if \e tag is not
- *     NULL)
- * \param fmt printf-like format string, plus their arguments
+ * @param wmx WiMAX handle this message is related to 
+ * @param level Message level 
+ * @param header Header to print for the message (the implementation
+ *     must decide if to print it or not).
+ * @param fmt printf-like format
+ * @param vargs variable-argument list as created by
+ *     stdargs.h:va_list() that will be formatted according to \e
+ *     fmt.
  *
- * \internal
+ * Prints/writes the \e libwimaxll's diagnostics messages to a
+ * destination as selected by the user of the library.
  *
- * Use w_*() functions only
+ * \note This function pointer must be set \b before calling any other
+ *     \e libwimaxll function.
  *
- * @ingroup: helper_log
+ * By default, diagnostics are printed with wimaxll_vlmsg_default() to
+ * \a stderr or stdout based on the level.
+ *
+ * For example, to deliver diagnostics to syslog:
+ *
+ * @code
+ * #include <syslog.h>
+ * ...
+ * static
+ * void wimaxll_vlmsg_syslog(....const char *fmt, va_list vargs)
+ * {
+ *         syslog(LOG_MAKEPRI(LOG_USER, LOG_INFO), header);
+ *         vsyslog(LOG_MAKEPRI(LOG_USER, LOG_INFO), fmt, vargs);
+ * }
+ * ...
+ * wimaxll_vlmsg = wimaxll_vlmsg_syslog();
+ * ...
+ * wimaxll_open(BLAH);
+ * @endcode
+ *
+ * The internal function wimaxll_msg() and wimaxll_lmsg() are used as
+ * as a frontend to this function.
+ * 
+ * \ingroup helper_log
  */
-void __w_msg(unsigned level, unsigned current_level,
-	     const char *tag, unsigned line,
-	     const char *fmt, ...)
+void (*wimaxll_vlmsg_cb)(struct wimaxll_handle *wmx, unsigned level,
+			 const char *header,
+			 const char *fmt, va_list vargs) =
+	wimaxll_vlmsg_default;
+
+
+/**
+ * Default header for diagnostic messages
+ *
+ * If there is no handle, prints just "libwimaxll", otherwise
+ * "libwimaxll[device]"; if the message is debug, also adds a
+ * "(@ FUNCTION:LINE)" origin tag.
+ * 
+ * \ingroup helper_log
+ */
+void wimaxll_msg_hdr_default(char *buf, size_t buf_len,
+			     struct wimaxll_handle *wmx, enum w_levels level,
+			     const char *origin_str, unsigned origin_line)
+{
+	size_t bytes;
+	if (wmx == NULL)
+		bytes = snprintf(buf, buf_len, "libwimaxll: ");
+	else if ((unsigned long) wmx < 4096)
+		bytes = snprintf(buf, buf_len, "libwimaxll[bad handle %p]: ",
+				 wmx);
+	else
+		bytes = snprintf(buf, buf_len, "libwimaxll[%s]: ", wmx->name);
+	if (level >= W_D0 && origin_str != NULL)
+		snprintf(buf + bytes, buf_len - bytes,
+			 "(@ %s:%u) ", origin_str, origin_line);
+}
+
+
+/**
+ * Create a header for library diagnostic messages [backend]
+ *
+ * @param buf Buffer where to place the header
+ * @param buf_len Size of the buffer
+ * @param wmx WiMAX handle the message is being generated for (can be
+ *     NULL or invalid).
+ * @param level Level of the log message this header is being
+ *     generated for.
+ * @param origin_str Origin of the message (used for a source file
+ *     name or function name). If %NULL, the origin information should
+ *     not be considered. 
+ * @param origin_line Origin of the message (used for a line in a
+ *     source file or function).
+ *
+ * Creates a header to prefix to ever message printed with
+ * wimaxll_msg().
+ *
+ * By default, diagnostics are printed with wimaxll_msg_hdr_default()
+ * is used, which creates a "libwimaxll[DEVICENAME]" prefix.
+ *
+ * To change it:
+ *
+ * @code
+ * ...
+ * static
+ * void my_wimaxll_msg_hdr(char *buf, size_t len, struct
+ *                         wimaxll_handle *wmx)
+ * {
+ *         snprintf(buf, len, "my prefix: ");
+ * }
+ * ...
+ * wimaxll_msg_hdr = my_wimaxll_msg_hdr;
+ * ...
+ * wimaxll_open(BLAH);
+ * @endcode
+ *
+ * \ingroup helper_log
+ */
+void (*wimaxll_msg_hdr_cb)(char *buf, size_t buf_len,
+			   struct wimaxll_handle *wmx, enum w_levels level,
+			   const char *origin_str, unsigned origin_line) =
+	wimaxll_msg_hdr_default;
+
+
+static
+void wimaxll_vlmsg(unsigned level, unsigned current_level,
+		  const char *origin_str, unsigned origin_int,
+		  struct wimaxll_handle *wmx, const char *fmt, va_list vargs)
+{
+	char header[64] = "";
+	if (level > current_level && level != W_PRINT)
+		return;
+	if (wimaxll_msg_hdr_cb)
+		wimaxll_msg_hdr_cb(header, sizeof(header), wmx,
+				   level, origin_str, origin_int);
+	wimaxll_vlmsg_cb(wmx, level, header, fmt, vargs);
+}
+
+
+/**
+ * Prints library diagnostic messages with a predefined format [frontend]
+ *
+ * @param wmx WiMAX handle; if NULL, no device header will be presented.
+ * @param fmt printf-like format followed by any arguments
+ *
+ * Called by the library functions to print status/error messages. By
+ * default these are sent over to stderr.
+ *
+ * However, library users can change this default behaviour by setting
+ * wimaxll_vmsg() as documented in that function pointer's
+ * documentation.
+ *
+ * \ingroup helper_log
+ */
+void wimaxll_msg(struct wimaxll_handle *wmx, const char *fmt, ...)
 {
 	va_list vargs;
 	va_start(vargs, fmt);
-	__w_vmsg(level, current_level, tag, line, fmt, vargs);
+	wimaxll_vlmsg(W_PRINT, W_PRINT, NULL, 0, wmx, fmt, vargs);
+	va_end(vargs);
+}
+
+
+/**
+ * Prints library diagnostic messages with a predefined format
+ * [frontend] and log level control
+ *
+ * @param level level of the messagve
+ * @param current_level current logging level
+ * @param origin_str Origin of the message (used for a source file
+ *     name or function name).
+ * @param origin_line Origin of the message (used for a line in a
+ *     source file or function).
+ * @param wmx WiMAX handle; if NULL, no device header will be presented.
+ * @param fmt printf-like format followed by any arguments
+ *
+ * Called by the library functions to print status/error messages if
+ * the current log level allows it. By default these are sent over to
+ * stderr.
+ *
+ * However, library users can change this default behaviour by setting
+ * wimaxll_vmsg() as documented in that function pointer's
+ * documentation.
+ *
+ * \ingroup helper_log
+ */
+void wimaxll_lmsg(unsigned level, unsigned current_level,
+		  const char *origin_str, unsigned origin_line,
+		  struct wimaxll_handle *wmx, const char *fmt, ...)
+{
+	va_list vargs;
+	va_start(vargs, fmt);
+	wimaxll_vlmsg(level, current_level, origin_str, origin_line,
+		      wmx, fmt, vargs);
 	va_end(vargs);
 }
 
@@ -109,7 +286,7 @@ void w_abort(int result, const char *fmt, ...)
 {
 	va_list vargs;
 	va_start(vargs, fmt);
-	__w_vmsg(W_ERROR, W_ERROR, __FILE__, __LINE__, fmt, vargs);
+	wimaxll_vlmsg(W_ERROR, W_ERROR, __FILE__, __LINE__, NULL, fmt, vargs);
 	va_end(vargs);
 	exit(result);
 }

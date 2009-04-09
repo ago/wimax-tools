@@ -192,21 +192,10 @@ int wimaxll_wait_for_ack(struct wimaxll_handle *wmx)
 
 
 /**
- * \defgroup diagnostics_group Output of diagnostics messages
- *
- * The \e libwimaxll library prints diagnostics by default to \a
- * stderr. Said destination can be changed by the user by setting the
- * wimaxll_vmsg() function pointer before calling any other \a
- * libwimaxll function.
- *
- * To restore the default diagnostics destination, set wimaxll_vmsg()
- * back to wimaxll_vmsg_stderr().
- */
-
-
-/**
  * Deliver \e libwimaxll diagnostics messages to \e stderr
  *
+ * \deprecated { use wimaxll_vlmsg_cb }
+ * 
  * \param fmt printf-like format
  * \param vargs variable-argument list as created by
  *     stdargs.h:va_list() that will be formatted according to \e
@@ -226,6 +215,8 @@ void wimaxll_vmsg_stderr(const char *fmt, va_list vargs)
 /**
  * Print library diagnostics messages [backend]
  *
+ * \deprecated { use wimaxll_vlmsg_cb }
+ * 
  * @param fmt printf-like format
  * @param vargs variable-argument list as created by
  *     stdargs.h:va_list() that will be formatted according to \e
@@ -262,50 +253,7 @@ void wimaxll_vmsg_stderr(const char *fmt, va_list vargs)
  * The internal function wimaxll_msg() is used as as a frontend to
  * this function.
  */
-void (*wimaxll_vmsg)(const char *fmt, va_list vargs) = wimaxll_vmsg_stderr;
-
-
-static
-void __wimaxll_msg(const char *fmt, ...)
-{
-	va_list vargs;
-	va_start(vargs, fmt);
-	wimaxll_vmsg(fmt, vargs);
-	va_end(vargs);
-}
-
-
-/**
- * \internal
- *
- * Prints library diagnostic messages with a predefined format [frontend]
- *
- * @param wmx WiMAX handle; if NULL, no device header will be presented.
- * @param fmt printf-like format followed by any arguments
- *
- * Called by the library functions to print status/error messages. By
- * default these are sent over to stderr.
- *
- * However, library users can change this default behaviour by setting
- * wimaxll_vmsg() as documented in that function pointer's
- * documentation.
- *
- * \ingroup diagnostics_group
- */
-void wimaxll_msg(struct wimaxll_handle *wmx, const char *fmt, ...)
-{
-	va_list vargs;
-	if (wmx == NULL)
-		__wimaxll_msg("libwimax: ");
-	else if ((unsigned long) wmx < 4096) {
-		__wimaxll_msg("libwimax: E: Corrupt device handle %p\n", wmx);
-		__wimaxll_msg("libwimax[n/a]: ");
-	} else
-		__wimaxll_msg("libwimax[%s]: ", wmx->name);
-	va_start(vargs, fmt);
-	wimaxll_vmsg(fmt, vargs);
-	va_end(vargs);
-}
+void (*wimaxll_vmsg)(const char *fmt, va_list vargs) = NULL;
 
 
 /**

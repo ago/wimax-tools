@@ -62,6 +62,19 @@
  * }
  *
  * @endcode
+ *
+ * To control where the log/progress messages go and how they are
+ * formatted, the client can set a couple of function pointers
+ * wimaxll_msg_hdr_cb() (which controls how a header/prefix for the
+ * message is created) and wimaxll_vlmsg_cb(), which takes the message
+ * and delivers it to whichever destination.
+ *
+ * The default implementations are wimaxll_msg_hdr_default() and
+ * wimaxll_vlmsg_default(), which add a
+ * "libwimall[DEVICENAME]:" header (with an optional "(@
+ * FUNCTION:LINE)") and deliver the message to \e stdout if it is a
+ * normal message (\e W_PRINT) or else if it is an error, warning,
+ * info or debug message, it is sent to \e stderr.
  */
 
 #ifndef __wimaxll__log_h__
@@ -90,27 +103,39 @@ enum w_levels {
 	W_D7,
 };
 
-void __w_vmsg(unsigned level, unsigned current_level,
-	      const char *tag, unsigned line,
-	      const char *fmt, va_list vargs);
+struct wimaxll_handle;
 
-void __w_msg(unsigned level, unsigned current_level,
-	     const char *tag, unsigned line,
-	     const char *fmt, ...);
+void wimaxll_msg(struct wimaxll_handle *, const char *fmt, ...)
+	__attribute__ ((format(printf, 2, 3)));
+
+void wimaxll_lmsg(unsigned level, unsigned current_level,
+		  const char *origin_str, unsigned origin_line,
+		  struct wimaxll_handle *wmx, const char *fmt, ...)
+	__attribute__ ((format(printf, 6, 7)));
+
+extern void (*wimaxll_vlmsg_cb)(struct wimaxll_handle *, unsigned,
+				const char *, const char *, va_list);
+void wimaxll_vlmsg_stderr(struct wimaxll_handle *, unsigned,
+			  const char *, const char *, va_list);
+
+extern void (*wimaxll_msg_hdr_cb)(char *, size_t, struct wimaxll_handle *,
+				  enum w_levels, const char *, unsigned);
+void wimaxll_msg_hdr_default(char *, size_t, struct wimaxll_handle *,
+			     enum w_levels, const char *, unsigned);
 
 void w_abort(int result, const char *fmt, ...);
 
-#define w_error(fmt...) __w_msg(W_ERROR, W_VERBOSITY, __func__, __LINE__, "E: " fmt)
-#define w_warn(fmt...) __w_msg(W_WARN, W_VERBOSITY, __func__, __LINE__, "W: " fmt)
-#define w_info(fmt...) __w_msg(W_INFO, W_VERBOSITY, __func__, __LINE__, "I: " fmt)
-#define w_print(fmt...) __w_msg(W_PRINT, W_VERBOSITY, __func__, __LINE__, fmt)
-#define w_d0(fmt...) __w_msg(W_D0, W_VERBOSITY, __func__, __LINE__, "D0: " fmt)
-#define w_d1(fmt...) __w_msg(W_D1, W_VERBOSITY, __func__, __LINE__, "D1: " fmt)
-#define w_d2(fmt...) __w_msg(W_D2, W_VERBOSITY, __func__, __LINE__, "D2: " fmt)
-#define w_d3(fmt...) __w_msg(W_D3, W_VERBOSITY, __func__, __LINE__, "D3: " fmt)
-#define w_d4(fmt...) __w_msg(W_D4, W_VERBOSITY, __func__, __LINE__, "D4: " fmt)
-#define w_d5(fmt...) __w_msg(W_D5, W_VERBOSITY, __func__, __LINE__, "D5: " fmt)
-#define w_d6(fmt...) __w_msg(W_D6, W_VERBOSITY, __func__, __LINE__, "D6: " fmt)
-#define w_d7(fmt...) __w_msg(W_D7, W_VERBOSITY, __func__, __LINE__, "D7: " fmt)
+#define w_error(fmt...) wimaxll_lmsg(W_ERROR, W_VERBOSITY, __func__, __LINE__, NULL, "E: " fmt)
+#define w_warn(fmt...) wimaxll_lmsg(W_WARN, W_VERBOSITY, __func__, __LINE__, NULL, "W: " fmt)
+#define w_info(fmt...) wimaxll_lmsg(W_INFO, W_VERBOSITY, __func__, __LINE__, NULL, "I: " fmt)
+#define w_print(fmt...) wimaxll_lmsg(W_PRINT, W_VERBOSITY, __func__, __LINE__, NULL, fmt)
+#define w_d0(fmt...) wimaxll_lmsg(W_D0, W_VERBOSITY, __func__, __LINE__, NULL, "D0: " fmt)
+#define w_d1(fmt...) wimaxll_lmsg(W_D1, W_VERBOSITY, __func__, __LINE__, NULL, "D1: " fmt)
+#define w_d2(fmt...) wimaxll_lmsg(W_D2, W_VERBOSITY, __func__, __LINE__, NULL, "D2: " fmt)
+#define w_d3(fmt...) wimaxll_lmsg(W_D3, W_VERBOSITY, __func__, __LINE__, NULL, "D3: " fmt)
+#define w_d4(fmt...) wimaxll_lmsg(W_D4, W_VERBOSITY, __func__, __LINE__, NULL, "D4: " fmt)
+#define w_d5(fmt...) wimaxll_lmsg(W_D5, W_VERBOSITY, __func__, __LINE__, NULL, "D5: " fmt)
+#define w_d6(fmt...) wimaxll_lmsg(W_D6, W_VERBOSITY, __func__, __LINE__, NULL, "D6: " fmt)
+#define w_d7(fmt...) wimaxll_lmsg(W_D7, W_VERBOSITY, __func__, __LINE__, NULL, "D7: " fmt)
 
 #endif /* #define __wimaxll__log_h__ */
