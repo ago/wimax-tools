@@ -137,6 +137,8 @@ AC_OUTPUT(Makefile
           doc/doxygen.conf
           libwimaxll-0.pc
           libwimaxll-0-uninstalled.pc
+          libwimaxll-i2400m-0.pc
+          libwimaxll-i2400m-0-uninstalled.pc
           bin/Makefile
           bin/wimax-tools-version
           include/Makefile
