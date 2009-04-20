@@ -308,6 +308,7 @@ void *wimaxll_priv_get(struct wimaxll_handle *);
 void wimaxll_priv_set(struct wimaxll_handle *, void *);
 void wimaxll_close(struct wimaxll_handle *);
 const char *wimaxll_ifname(const struct wimaxll_handle *);
+unsigned wimaxll_ifidx(const struct wimaxll_handle *);
 
 /* Wait for data from the kernel, execute callbacks */
 int wimaxll_recv_fd(struct wimaxll_handle *);

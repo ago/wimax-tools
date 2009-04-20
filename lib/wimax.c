@@ -272,6 +272,26 @@ const char *wimaxll_ifname(const struct wimaxll_handle *wmx)
 
 
 /**
+ * Return the interface index of the system's WiMAX interface
+ * associated to an open handle
+ *
+ * \param wmx WiMAX device handle
+ * \return Interface index
+ *
+ * Note that if this is an \e any interface (open for all devices),
+ * this will vary. When not processing a callback, it will be
+ * zero. When processing a callback, this call will return the
+ * interface for which the callback was executed.
+ *
+ * \ingroup device_management
+ */
+unsigned wimaxll_ifidx(const struct wimaxll_handle *wmx)
+{
+	return wmx->ifidx;
+}
+
+
+/**
  * Set the private data associated to a WiMAX device handle
  *
  * @param wmx WiMAX device handle
