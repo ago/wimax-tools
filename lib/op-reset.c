@@ -57,7 +57,7 @@
  *
  * \return result of the operation.
  *
- *     - 0: wam reset suceeded
+ *     - 0: warm reset suceeded
  *     - -ENODEV: warm reset failed and had to resort to a cold/bus
  *       reset; the device was disconnected from the system and the
  *       current handle is invalid and should be closed.
