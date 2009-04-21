@@ -263,6 +263,9 @@ void (*wimaxll_vmsg)(const char *fmt, va_list vargs) = NULL;
  * \param wmx WiMAX device handle
  * \return Interface name (only valid while the handle is open)
  *
+ * Note that if this is an \e any interface (open for all devices),
+ * this will be empty.
+ * 
  * \ingroup device_management
  */
 const char *wimaxll_ifname(const struct wimaxll_handle *wmx)

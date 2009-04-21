@@ -280,12 +280,6 @@ int wimaxll_gnl_resolve(struct wimaxll_handle *wmx)
 
 	d_fnstart(5, wmx, "(wmx %p)\n", wmx);
 	/* Lookup the generic netlink family */
-	wmx->ifidx = if_nametoindex(wmx->name);
-	if (wmx->ifidx == 0) {
-		wimaxll_msg(wmx, "E: device %s does not exist\n", wmx->name);
-		result = -ENODEV;
-		goto error_no_dev;
-	}
 	result = genl_ctrl_resolve(wmx->nlh_tx, "WiMAX");
 	if (result < 0) {
 		wimaxll_msg(wmx, "E: device %s presents no WiMAX interface; "
@@ -327,7 +321,6 @@ int wimaxll_gnl_resolve(struct wimaxll_handle *wmx)
 error_bad_major:
 error_mcg_resolve:
 error_ctrl_resolve:
-error_no_dev:
 	d_fnend(5, wmx, "(wmx %p) = %d\n", wmx, result);
 	return result;
 }
@@ -343,7 +336,11 @@ void wimaxll_free(struct wimaxll_handle *wmx)
 /**
  * Open a handle to the WiMAX control interface in the kernel
  *
- * \param device device name of the WiMAX network interface
+ * \param device device name of the WiMAX network interface; to
+ *     specify an interface by index, use the name "#IFNAME". To open
+ *     a handle that will receive data for any device (but not allow
+ *     sending commands to devices), set %NULL.
+ * 
  * \return WiMAX device handle on success; on error, %NULL is returned
  *     and the \a errno variable is updated with a corresponding
  *     negative value.
@@ -381,19 +378,41 @@ struct wimaxll_handle *wimaxll_open(const char *device)
 		goto error_gnl_handle_alloc;
 	}
 	memset(wmx, 0, sizeof(*wmx));
-	strncpy(wmx->name, device, sizeof(wmx->name));
+	if (device != NULL && sscanf(device, "#%u", &wmx->ifidx) == 1) {
+		/* Open by interface index "#IFINDEX" */
+		if (if_indextoname(wmx->ifidx, wmx->name) == NULL) {
+			wimaxll_msg(wmx, "E: device index #%u does not exist\n",
+				    wmx->ifidx);
+			result = -ENODEV;
+			goto error_no_dev;
+		}
+	} else if (device != NULL) {
+		/* Open by interface name */
+		strncpy(wmx->name, device, sizeof(wmx->name));
+		wmx->ifidx = if_nametoindex(wmx->name);
+		if (wmx->ifidx == 0) {
+			wimaxll_msg(wmx, "E: device %s does not exist\n", wmx->name);
+			result = -ENODEV;
+			goto error_no_dev;
+		}
+	} else {
+		/* "Any" device (just for receiving callbacks) */
+		wmx->name[0] = 0;
+		wmx->ifidx = 0;
+	}
 
 	/* Setup the TX side */
 	wmx->nlh_tx = nl_handle_alloc();
 	if (wmx->nlh_tx == NULL) {
 		result = nl_get_errno();
-		wimaxll_msg(wmx, "E: cannot open TX netlink handle: %d\n",
-			  result);
+		wimaxll_msg(wmx, "E: TX: cannot allocate handle: %d (%s)\n",
+			    result, nl_geterror());
 		goto error_nl_handle_alloc_tx;
 	}
 	result = nl_connect(wmx->nlh_tx, NETLINK_GENERIC);
 	if (result < 0) {
-		wimaxll_msg(wmx, "E: cannot connect TX netlink: %d\n", result);
+		wimaxll_msg(wmx, "E: TX: cannot connect netlink: %d (%s)\n",
+			    result, nl_geterror());
 		goto error_nl_connect_tx;
 	}
 
@@ -401,13 +420,14 @@ struct wimaxll_handle *wimaxll_open(const char *device)
 	wmx->nlh_rx = nl_handle_alloc();
 	if (wmx->nlh_rx == NULL) {
 		result = nl_get_errno();
-		wimaxll_msg(wmx, "E: RX: cannot allocate netlink handle: %d\n",
-			    result);
+		wimaxll_msg(wmx, "E: RX: cannot allocate handle: %d (%s)\n",
+			    result, nl_geterror());
 		goto error_nl_handle_alloc_rx;
 	}
 	result = nl_connect(wmx->nlh_rx, NETLINK_GENERIC);
 	if (result < 0) {
-		wimaxll_msg(wmx, "E: RX: cannot connect netlink: %d\n", result);
+		wimaxll_msg(wmx, "E: RX: cannot connect netlink: %d (%s)\n",
+			    result, nl_geterror());
 		goto error_nl_connect_rx;
 	}
 
@@ -417,19 +437,21 @@ struct wimaxll_handle *wimaxll_open(const char *device)
 
 	result = nl_socket_add_membership(wmx->nlh_rx, wmx->mcg_id);
 	if (result < 0) {
-		wimaxll_msg(wmx, "E: RX: cannot join multicast group %u: %d\n",
-			    wmx->mcg_id, result);
+		wimaxll_msg(wmx, "E: RX: cannot join multicast group %u: %d (%s)\n",
+			    wmx->mcg_id, result, nl_geterror());
 		goto error_nl_add_membership;
 	}
 	/* Now we check if the device is a WiMAX supported device, by
 	 * just querying for the RFKILL status. If this is not a WiMAX
 	 * device, it will fail with -ENODEV. */
-	result = wimaxll_rfkill(wmx, WIMAX_RF_QUERY);
-	if (result == -ENODEV) {
-		wimaxll_msg(wmx, "E: device %s is not a WiMAX device; or "
-			  "supports an interface unknown to libwimaxll: %d\n",
-			  wmx->name, result);
-		goto error_rfkill;
+	if (wmx->ifidx > 0) {		/* if this handle is for any, don't check */
+		result = wimaxll_rfkill(wmx, WIMAX_RF_QUERY);
+		if (result == -ENODEV) {
+			wimaxll_msg(wmx, "E: device %s is not a WiMAX device; "
+				    "or supports an interface unknown to "
+				    "libwimaxll: %d\n", wmx->name, result);
+			goto error_rfkill;
+		}
 	}
 	d_fnend(3, wmx, "(device %s) = %p\n", device, wmx);
 	return wmx;
@@ -445,13 +467,13 @@ error_nl_handle_alloc_rx:
 error_nl_connect_tx:
 	nl_handle_destroy(wmx->nlh_tx);
 error_nl_handle_alloc_tx:
+error_no_dev:
 	wimaxll_free(wmx);
 error_gnl_handle_alloc:
 	errno = -result;
 	d_fnend(3, NULL, "(device %s) = NULL\n", device);
 	return NULL;
 }
-
 
 /**
  * Close a device handle opened with wimaxll_open()

@@ -125,7 +125,8 @@ int wimaxll_gnl_handle_state_change(struct wimaxll_handle *wmx,
 	struct genlmsghdr *gnl_hdr;
 	struct nlattr *tb[WIMAX_GNL_ATTR_MAX+1];
 	enum wimax_st old_state, new_state;
-
+	unsigned dest_ifidx;
+	
 	d_fnstart(7, wmx, "(wmx %p msg %p)\n", wmx, msg);
 	nl_hdr = nlmsg_hdr(msg);
 	gnl_hdr = nlmsg_data(nl_hdr);
@@ -141,14 +142,10 @@ int wimaxll_gnl_handle_state_change(struct wimaxll_handle *wmx,
 		goto error_parse;
 	}
 	/* Find if the message is for the interface wmx represents */
-	if (tb[WIMAX_GNL_STCH_IFIDX] == NULL) {
+	dest_ifidx = nla_get_u32(tb[WIMAX_GNL_STCH_IFIDX]);
+	if (wmx->ifidx > 0 && wmx->ifidx != dest_ifidx) {
 		wimaxll_msg(wmx, "E: %s: cannot find IFIDX attribute\n",
 			    __func__);
-		result = -EINVAL;
-		goto error_no_attrs;
-
-	}
-	if (wmx->ifidx != nla_get_u32(tb[WIMAX_GNL_STCH_IFIDX])) {
 		result = -ENODEV;
 		goto error_no_attrs;
 	}
@@ -174,10 +171,19 @@ int wimaxll_gnl_handle_state_change(struct wimaxll_handle *wmx,
 	d_printf(1, wmx, "D: CRX re_state_change old %u new %u\n",
 		 old_state, new_state);
 
+	/* If this is an "any" handle, set the wmx->ifidx to the
+	 * received one so the callback can now where did the thing
+	 * come from. Will be restored.
+	 */
+	if (wmx->ifidx == 0) {
+		wmx->ifidx = dest_ifidx;
+		dest_ifidx = 0;
+	}
 	/* Now execute the callback for handling re-state-change; if
 	 * it doesn't update the context's result code, we'll do. */
 	result = wmx->state_change_cb(wmx, wmx->state_change_priv,
 				      old_state, new_state);
+	wmx->ifidx = dest_ifidx;
 error_no_attrs:
 error_parse:
 	d_fnend(7, wmx, "(wmx %p msg %p) = %zd\n", wmx, msg, result);

@@ -192,7 +192,9 @@ void wimaxll_cb_maybe_set_result(struct wimaxll_cb_ctx *ctx, int val)
  * wimaxll_msg_write() and \c wimaxll_msg_read() at the same time in a
  * multithreaded environment, for example.
  *
- * \param ifidx Interface Index (of the network interface)
+ * \param ifidx Interface Index (of the network interface); if 0, the
+ *     interface name will be \c "any" and this means that this handle
+ *     works for \e any WiMAX interface.
  * \param gnl_family_id Generic Netlink Family ID assigned to the
  *     device; we maintain it here (for each interface) because we
  *     want to discover it every time we open. This solves the case of

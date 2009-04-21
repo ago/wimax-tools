@@ -162,6 +162,7 @@ int wimaxll_gnl_handle_msg_to_user(struct wimaxll_handle *wmx,
 	struct genlmsghdr *gnl_hdr;
 	struct nlattr *tb[WIMAX_GNL_ATTR_MAX+1];
 	const char *pipe_name;
+	unsigned dest_ifidx;
 	void *data;
 
 	d_fnstart(7, wmx, "(wmx %p msg %p)\n", wmx, msg);
@@ -185,7 +186,8 @@ int wimaxll_gnl_handle_msg_to_user(struct wimaxll_handle *wmx,
 		result = -EINVAL;
 		goto error_no_attrs;
 	}
-	if (wmx->ifidx != nla_get_u32(tb[WIMAX_GNL_MSG_IFIDX])) {
+	dest_ifidx = nla_get_u32(tb[WIMAX_GNL_MSG_IFIDX]);
+	if (wmx->ifidx > 0 && wmx->ifidx != dest_ifidx) {
 		result = -ENODEV;
 		goto error_no_attrs;
 	}
@@ -211,9 +213,18 @@ int wimaxll_gnl_handle_msg_to_user(struct wimaxll_handle *wmx,
 		 size, pipe_name);
 	d_dump(2, wmx, data, size);
 
+	/* If this is an "any" handle, set the wmx->ifidx to the
+	 * received one so the callback can now where did the thing
+	 * come from. Will be restored.
+	 */
+	if (wmx->ifidx == 0) {
+		wmx->ifidx = dest_ifidx;
+		dest_ifidx = 0;
+	}
 	/* Now execute the callback for handling msg-to-user */
 	result = wmx->msg_to_user_cb(wmx, wmx->msg_to_user_priv,
 				     pipe_name, data, size);
+	wmx->ifidx = dest_ifidx;
 error_no_attrs:
 error_parse:
 	d_fnend(7, wmx, "(wmx %p msg %p) = %d\n", wmx, msg, result);
@@ -400,6 +411,9 @@ ssize_t wimaxll_msg_write(struct wimaxll_handle *wmx,
 	void *msg;
 
 	d_fnstart(3, wmx, "(wmx %p buf %p size %zu)\n", wmx, buf, size);
+	result = -EBADF;
+	if (wmx->ifidx == 0)
+		goto error_not_any;
 	nl_msg = nlmsg_new();
 	if (nl_msg == NULL) {
 		result = nl_get_errno();
@@ -442,6 +456,7 @@ error_msg_send:
 error_msg_prep:
 	nlmsg_free(nl_msg);
 error_msg_alloc:
+error_not_any:
 	d_fnend(3, wmx, "(wmx %p buf %p size %zu) = %zd\n",
 		wmx, buf, size, result);
 	return result;

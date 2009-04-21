@@ -89,6 +89,10 @@ int wimaxll_reset(struct wimaxll_handle *wmx)
 	struct nl_msg *msg;
 
 	d_fnstart(3, wmx, "(wmx %p)\n", wmx);
+	result = -EBADF;
+	if (wmx->ifidx == 0)
+		goto error_not_any;
+
 	msg = nlmsg_new();
 	if (msg == NULL) {
 		result = errno;
@@ -119,6 +123,7 @@ error_msg_prep:
 error_msg_send:
 	nlmsg_free(msg);
 error_msg_alloc:
+error_not_any:
 	d_fnend(3, wmx, "(wmx %p) = %d\n", wmx, result);
 	return result;
 }
