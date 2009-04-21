@@ -18,7 +18,10 @@ const struct {
 } ${type}_names_vals[] = {
 EOF
 awk -vtype=$type -vtype_regex="^${type}_" '		\
-BEGIN { IGNORECASE = 1; }      				\
+BEGIN {                                                 \
+    IGNORECASE = 1;                                     \
+}      				                        \
+      				                        \
 $1 ~ type_regex {					\
     name=$1;                            		\
     symbol=$1;                            		\
@@ -28,6 +31,12 @@ $1 ~ type_regex {					\
     gsub(/,.*$/, "", name);       			\
     gsub(/_/, "-", name);               		\
     print "\t{ " symbol ", \"" tolower(name) "\" },";	\
-}' $@
-echo "	{ 0, NULL }"
-echo "};"
+    valid = valid tolower(name) " ";			\
+}                                                       \
+                                                        \
+END {                                                   \
+    print "	{ 0, NULL }";                           \
+    print "};";                                         \
+    print "const char " type "_valid_str[] = \"" valid "\";";  \
+    print "";                                           \
+} ' $@
