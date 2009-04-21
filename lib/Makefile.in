@@ -57,32 +57,33 @@ LIBRARIES = $(lib_LIBRARIES)
 ARFLAGS = cru
 libwimaxll_i2400m_a_AR = $(AR) $(ARFLAGS)
 libwimaxll_i2400m_a_LIBADD =
-am__objects_1 = genl.$(OBJEXT) log.$(OBJEXT) misc.$(OBJEXT) \
-	op-open.$(OBJEXT) op-msg.$(OBJEXT) op-reset.$(OBJEXT) \
-	op-rfkill.$(OBJEXT) re-state-change.$(OBJEXT) wimax.$(OBJEXT)
+am__objects_1 = i2400m.$(OBJEXT)
 am_libwimaxll_i2400m_a_OBJECTS = $(am__objects_1)
 libwimaxll_i2400m_a_OBJECTS = $(am_libwimaxll_i2400m_a_OBJECTS)
 libwimaxll_a_AR = $(AR) $(ARFLAGS)
 libwimaxll_a_LIBADD =
-am_libwimaxll_a_OBJECTS = $(am__objects_1)
+am__objects_2 = genl.$(OBJEXT) log.$(OBJEXT) misc.$(OBJEXT) \
+	op-open.$(OBJEXT) op-msg.$(OBJEXT) op-reset.$(OBJEXT) \
+	op-rfkill.$(OBJEXT) re-state-change.$(OBJEXT) wimax.$(OBJEXT)
+am_libwimaxll_a_OBJECTS = $(am__objects_2)
 libwimaxll_a_OBJECTS = $(am_libwimaxll_a_OBJECTS)
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libwimaxll_i2400m_la_LIBADD =
-am__objects_2 = libwimaxll_i2400m_la-i2400m.lo
-am_libwimaxll_i2400m_la_OBJECTS = $(am__objects_2)
+am__objects_3 = libwimaxll_i2400m_la-i2400m.lo
+am_libwimaxll_i2400m_la_OBJECTS = $(am__objects_3)
 libwimaxll_i2400m_la_OBJECTS = $(am_libwimaxll_i2400m_la_OBJECTS)
 libwimaxll_i2400m_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(libwimaxll_i2400m_la_CFLAGS) $(CFLAGS) \
 	$(libwimaxll_i2400m_la_LDFLAGS) $(LDFLAGS) -o $@
 libwimaxll_la_LIBADD =
-am__objects_3 = libwimaxll_la-genl.lo libwimaxll_la-log.lo \
+am__objects_4 = libwimaxll_la-genl.lo libwimaxll_la-log.lo \
 	libwimaxll_la-misc.lo libwimaxll_la-op-open.lo \
 	libwimaxll_la-op-msg.lo libwimaxll_la-op-reset.lo \
 	libwimaxll_la-op-rfkill.lo libwimaxll_la-re-state-change.lo \
 	libwimaxll_la-wimax.lo
-am_libwimaxll_la_OBJECTS = $(am__objects_3)
+am_libwimaxll_la_OBJECTS = $(am__objects_4)
 libwimaxll_la_OBJECTS = $(am_libwimaxll_la_OBJECTS)
 libwimaxll_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libwimaxll_la_CFLAGS) \
@@ -227,10 +228,14 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+
+#
+# libwimaxll
+#
 INCLUDES = \
 	-I$(top_builddir)/include -I$(top_srcdir)/include \
 	$(LIBNL1_CFLAGS) \
-	$(I2400M_INCLUDES)
+	-I $(LINUX_INCLUDE_PATH)
 
 noinst_HEADERS = debug.h internal.h
 libwimaxll_sources = \
@@ -244,6 +249,7 @@ libwimaxll_sources = \
         re-state-change.c	\
 	wimax.c
 
+libwimaxll_a_SOURCES = $(libwimaxll_sources)
 libwimaxll_la_SOURCES = $(libwimaxll_sources)
 # Trick automake
 libwimaxll_la_CFLAGS = $(AM_CFLAGS)
@@ -253,10 +259,25 @@ libwimaxll_la_CFLAGS = $(AM_CFLAGS)
 # AGE: inc for added interfaces
 #      set to zero if removed existing interfaces
 libwimaxll_la_LDFLAGS = -version-info 1:0:1 $(LIBNL1_LIBS)
-libwimaxll_a_SOURCES = $(libwimaxll_sources)
+
+# misc.c includes this file
+BUILT_SOURCES = names-vals.h
+enum_names = \
+	wimax_st
+
+CLEANFILES = names-vals.h
+noinst_SCRIPTS = enum-to-names-vals
+EXTRA_DIST = $(noinst_SCRIPTS)
+lib_LTLIBRARIES = libwimaxll.la libwimaxll-i2400m.la
+lib_LIBRARIES = libwimaxll.a libwimaxll-i2400m.a
+
+#
+# libwimaxll-i2400m
+#
 libwimaxll_i2400m_sources = \
 	i2400m.c
 
+libwimaxll_i2400m_a_SOURCES = $(libwimaxll_i2400m_sources)
 libwimaxll_i2400m_la_SOURCES = $(libwimaxll_i2400m_sources)
 # Trick automake
 libwimaxll_i2400m_la_CFLAGS = $(AM_CFLAGS)
@@ -266,16 +287,6 @@ libwimaxll_i2400m_la_CFLAGS = $(AM_CFLAGS)
 # AGE: inc for added interfaces
 #      set to zero if removed existing interfaces
 libwimaxll_i2400m_la_LDFLAGS = -lwimaxll -lpthread -version-info 1:0:1 $(LIBNL1_LIBS)
-libwimaxll_i2400m_a_SOURCES = $(libwimaxll_sources)
-lib_LTLIBRARIES = libwimaxll.la libwimaxll-i2400m.la
-lib_LIBRARIES = libwimaxll.a libwimaxll-i2400m.a
-BUILT_SOURCES = names-vals.h
-enum_names = \
-	wimax_st
-
-CLEANFILES = names-vals.h
-noinst_SCRIPTS = enum-to-names-vals
-EXTRA_DIST = $(noinst_SCRIPTS)
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -386,6 +397,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/genl.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/i2400m.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwimaxll_i2400m_la-i2400m.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwimaxll_la-genl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwimaxll_la-log.Plo@am__quote@
