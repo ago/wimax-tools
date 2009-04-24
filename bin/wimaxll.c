@@ -134,20 +134,8 @@ static
 void __cmd_list_itr(gpointer _cmd, gpointer _f)
 {
 	struct cmd *cmd = _cmd;
-	
-	w_print("%s: ", cmd->name);
-	argp_help(&cmd->argp, stdout,
-		  0
-//			  | ARGP_HELP_SHORT_USAGE
-//			  | ARGP_HELP_SEE
-		  | ARGP_HELP_LONG
-		  | ARGP_HELP_PRE_DOC
-		  | ARGP_HELP_POST_DOC
-		  | ARGP_HELP_DOC
-//			  | ARGP_HELP_BUG_ADDR
-//			  | ARGP_HELP_LONG_ONLY
-		  ,
-		  cmd->name);
+
+	w_print("%s\n", cmd->name);
 }
 
 
