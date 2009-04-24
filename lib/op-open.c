@@ -142,13 +142,13 @@ int wimaxll_gnl_cb(struct nl_msg *msg, void *_ctx)
 		if (wmx->msg_to_user_cb)
 			result = wimaxll_gnl_handle_msg_to_user(wmx, msg);
 		else
-			result = -ENODATA;
+			result = 0;
 		break;
 	case WIMAX_GNL_RE_STATE_CHANGE:
 		if (wmx->state_change_cb)
 			result = wimaxll_gnl_handle_state_change(wmx, msg);
 		else
-			result = -ENODATA;
+			result = 0;
 		break;
 	default:
 		d_printf(3, wmx, "E: %s: received unknown gnl message %d\n",
