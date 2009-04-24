@@ -242,6 +242,11 @@ struct nlattr;
  *
  * Callbacks are always passed a pointer to a private context as set
  * by the application.
+ *
+ * Callbacks can return -%EBUSY to have wimaxll_recv() stop processing
+ * messages and pass control to the caller (which will see it
+ * returning -%EBUSY). Callbacks *SHOULD NOT* return -%EINPROGRESS, as
+ * it is used internally by wimaxll_recv().
  */
 
 

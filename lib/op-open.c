@@ -108,10 +108,8 @@ static
  *
  * Called by nl_recvmsgs() when a valid message is received. We
  * multiplex and handle messages that are known to the library. If the
- * message is unknown, do nothing other than setting -ENODATA.
- *
- * In wimaxll_recv(), -ENODATA is considered a retryable error --
- * effectively, the message is skipped.
+ * message is unknown, do nothing other than maybe printing an error
+ * message. 
  *
  * The wimaxll_gnl_handle_*() functions need to return:
  *
@@ -153,7 +151,7 @@ int wimaxll_gnl_cb(struct nl_msg *msg, void *_ctx)
 	default:
 		d_printf(3, wmx, "E: %s: received unknown gnl message %d\n",
 			 __func__, gnl_hdr->cmd);
-		result = -ENODATA;
+		result = 0;
 	}
 	if (result == -EBUSY) {		/* stop signal from the user's callback */
 		result_nl = NL_STOP;
@@ -197,9 +195,7 @@ int wimaxll_recv_fd(struct wimaxll_handle *wmx)
  *     implementation of the callback). On error, a negative errno
  *     code:
  *
- *     -%EINPROGRESS: the message was not received.
- *
- *     -%ENODATA: messages were received, but none of the known types.
+ *     -%EBUSY: callback instructed to stop processing messages
  *
  * Read one or more messages from a multicast group and for each valid
  * one, execute the callbacks set in the multi cast handle.
@@ -247,13 +243,15 @@ ssize_t wimaxll_recv(struct wimaxll_handle *wmx)
 		result = nl_recvmsgs(wmx->nlh_rx, cb);
 		d_printf(3, wmx, "I: ctx.result %zd result %zd\n",
 			 ctx.result, result);
-	} while ((ctx.result == -EINPROGRESS || ctx.result == -ENODATA)
+	} while ((ctx.result == -EINPROGRESS)
 		 && result > 0);
 	if (result < 0)
 		wimaxll_msg(wmx, "E: %s: nl_recvmgsgs failed: %zd\n",
 			    __func__, result);
-	else
+	else if (ctx.result != -EINPROGRESS)
 		result = ctx.result;
+	else
+		result = 0;
 	/* No complains on error; the kernel might just be sending an
 	 * error out; pass it through. */
 	d_fnend(3, wmx, "(wmx %p) = %zd\n", wmx, result);
