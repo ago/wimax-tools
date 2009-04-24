@@ -80,8 +80,10 @@ void w_cmd_unregister(struct cmd *);
 
 /* Misc utilities */
 void w_cmd_need_if(struct wimaxll_handle *);
-void w_abort(int result, const char *fmt, ...);
-void w_msg(unsigned, const char *, unsigned, const char *fmt, ...);
+void w_abort(int result, const char *fmt, ...)
+	__attribute__ ((format(printf, 2, 3)));
+void w_msg(unsigned, const char *, unsigned, const char *fmt, ...)
+	__attribute__ ((format(printf, 4, 5)));
 
 /* Logging / printing */
 enum {
