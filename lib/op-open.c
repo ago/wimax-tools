@@ -282,10 +282,8 @@ int wimaxll_gnl_resolve(struct wimaxll_handle *wmx)
 	/* Lookup the generic netlink family */
 	result = genl_ctrl_resolve(wmx->nlh_tx, "WiMAX");
 	if (result < 0) {
-		wimaxll_msg(wmx, "E: device %s presents no WiMAX interface; "
-			  "it might not exist, not be be a WiMAX device or "
-			  "support an interface unknown to libwimaxll: %d\n",
-			  wmx->name, result);
+		wimaxll_msg(wmx, "E: can't find kernel's WiMAX API "
+			    "over genetic netlink: %d\n", result);
 		goto error_ctrl_resolve;
 	}
 	wmx->gnl_family_id = result;
