@@ -1,0 +1,5 @@
+#! /bin/sh
+dev=$1
+arg=$2
+echo "INFO: this program is deprecated, use 'wimaxll -i DEVICE rfkill [ARG]'"
+wimaxll -i "$dev" rfkill "$arg"

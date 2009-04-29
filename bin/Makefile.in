@@ -34,8 +34,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = wimaxll$(EXEEXT) wimaxll-wait-for-state-change$(EXEEXT) \
-	wimaxll-rfkill$(EXEEXT) wimaxll-reset$(EXEEXT)
+bin_PROGRAMS = wimaxll$(EXEEXT)
 subdir = bin
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/wimax-tools-version.in
@@ -83,23 +82,6 @@ am__DEPENDENCIES_1 =
 wimaxll_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(wimaxll_LDFLAGS) \
 	$(LDFLAGS) -o $@
-wimaxll_reset_SOURCES = wimaxll-reset.c
-wimaxll_reset_OBJECTS = wimaxll-reset.$(OBJEXT)
-wimaxll_reset_LDADD = $(LDADD)
-wimaxll_reset_DEPENDENCIES = ../lib/libwimaxll.la \
-	$(am__DEPENDENCIES_1)
-wimaxll_rfkill_SOURCES = wimaxll-rfkill.c
-wimaxll_rfkill_OBJECTS = wimaxll-rfkill.$(OBJEXT)
-wimaxll_rfkill_LDADD = $(LDADD)
-wimaxll_rfkill_DEPENDENCIES = ../lib/libwimaxll.la \
-	$(am__DEPENDENCIES_1)
-wimaxll_wait_for_state_change_SOURCES =  \
-	wimaxll-wait-for-state-change.c
-wimaxll_wait_for_state_change_OBJECTS =  \
-	wimaxll-wait-for-state-change.$(OBJEXT)
-wimaxll_wait_for_state_change_LDADD = $(LDADD)
-wimaxll_wait_for_state_change_DEPENDENCIES = ../lib/libwimaxll.la \
-	$(am__DEPENDENCIES_1)
 binSCRIPT_INSTALL = $(INSTALL_SCRIPT)
 SCRIPTS = $(bin_SCRIPTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
@@ -115,11 +97,9 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = wimaxll-pl-reset.c wimaxll-pl-rfkill.c wimaxll-pl-wfsc.c \
-	wimaxll.c wimaxll-reset.c wimaxll-rfkill.c \
-	wimaxll-wait-for-state-change.c
+	wimaxll.c
 DIST_SOURCES = wimaxll-pl-reset.c wimaxll-pl-rfkill.c \
-	wimaxll-pl-wfsc.c wimaxll.c wimaxll-reset.c wimaxll-rfkill.c \
-	wimaxll-wait-for-state-change.c
+	wimaxll-pl-wfsc.c wimaxll.c
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -248,7 +228,12 @@ INCLUDES = \
 	$(I2400M_INCLUDES)
 
 LDADD = ../lib/libwimaxll.la $(LIBNL1_LIBS)
-bin_SCRIPTS = wimax-tools-version
+bin_SCRIPTS = \
+	wimax-tools-version		\
+	wimaxll-reset			\
+	wimaxll-rfkill			\
+	wimaxll-wait-for-state-change
+
 AM_CFLAGS = @GLIB_CFLAGS@ -DPLUGINDIR=\""$(plugindir)"\"
 AM_LDFLAGS = @GLIB_LIBS@ ../lib/libwimaxll.la $(LIBNL1_LIBS)
 wimaxll_LDFLAGS = $(AM_LDFLAGS) -ldl -Wl,--export-dynamic -Wl,--version-script=wimaxll.ver
@@ -364,15 +349,6 @@ clean-binPROGRAMS:
 wimaxll$(EXEEXT): $(wimaxll_OBJECTS) $(wimaxll_DEPENDENCIES) 
 	@rm -f wimaxll$(EXEEXT)
 	$(wimaxll_LINK) $(wimaxll_OBJECTS) $(wimaxll_LDADD) $(LIBS)
-wimaxll-reset$(EXEEXT): $(wimaxll_reset_OBJECTS) $(wimaxll_reset_DEPENDENCIES) 
-	@rm -f wimaxll-reset$(EXEEXT)
-	$(LINK) $(wimaxll_reset_OBJECTS) $(wimaxll_reset_LDADD) $(LIBS)
-wimaxll-rfkill$(EXEEXT): $(wimaxll_rfkill_OBJECTS) $(wimaxll_rfkill_DEPENDENCIES) 
-	@rm -f wimaxll-rfkill$(EXEEXT)
-	$(LINK) $(wimaxll_rfkill_OBJECTS) $(wimaxll_rfkill_LDADD) $(LIBS)
-wimaxll-wait-for-state-change$(EXEEXT): $(wimaxll_wait_for_state_change_OBJECTS) $(wimaxll_wait_for_state_change_DEPENDENCIES) 
-	@rm -f wimaxll-wait-for-state-change$(EXEEXT)
-	$(LINK) $(wimaxll_wait_for_state_change_OBJECTS) $(wimaxll_wait_for_state_change_LDADD) $(LIBS)
 install-binSCRIPTS: $(bin_SCRIPTS)
 	@$(NORMAL_INSTALL)
 	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
@@ -402,9 +378,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wimaxll-pl-reset.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wimaxll-pl-rfkill.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wimaxll-pl-wfsc.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wimaxll-reset.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wimaxll-rfkill.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wimaxll-wait-for-state-change.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wimaxll.Po@am__quote@
 
 .c.o:

@@ -19,9 +19,6 @@ TAGS
 
 /autom4te.cache/
 /bin/wimax-tools-version
-/bin/wimaxll-reset
-/bin/wimaxll-rfkill
-/bin/wimaxll-wait-for-state-change
 /config.log
 /config.status
 /doc/doxygen.conf

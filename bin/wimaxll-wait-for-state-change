@@ -1,0 +1,4 @@
+#! /bin/sh
+dev=$1
+echo "INFO: this program is deprecated, use 'wimaxll -i DEVICE wait-for-state-change'"
+wimaxll -i "$dev" wait-for-state-change

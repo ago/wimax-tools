@@ -7,13 +7,14 @@ INCLUDES = \
 
 LDADD = ../lib/libwimaxll.la $(LIBNL1_LIBS)
 
-bin_SCRIPTS = wimax-tools-version
+bin_SCRIPTS = \
+	wimax-tools-version		\
+	wimaxll-reset			\
+	wimaxll-rfkill			\
+	wimaxll-wait-for-state-change
 
 bin_PROGRAMS = 				\
-	wimaxll				\
-	wimaxll-wait-for-state-change	\
-	wimaxll-rfkill			\
-	wimaxll-reset
+	wimaxll
 
 AM_CFLAGS = @GLIB_CFLAGS@ -DPLUGINDIR=\""$(plugindir)"\"
 AM_LDFLAGS = @GLIB_LIBS@ ../lib/libwimaxll.la $(LIBNL1_LIBS)
