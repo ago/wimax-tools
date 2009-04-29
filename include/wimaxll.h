@@ -403,7 +403,7 @@ unsigned long wimaxll_swap_32(unsigned long x)
 
 static inline	// ugly hack for doxygen
 /**
- * Convert a little-endian 16 bits to cpu order.
+ * Convert a cpu-order 16 bits to little endian.
  *
  * \ingroup miscellaneous_group
  * \fn unsigned short wimaxll_cpu_to_le16(unsigned short x)
@@ -424,7 +424,7 @@ unsigned short wimaxll_cpu_to_le16(unsigned short x)
 
 static inline	// ugly hack for doxygen
 /**
- * Convert a cpu-order 16 bits to little endian.
+ * Convert a little-endian 16 bits to cpu order.
  *
  * \ingroup miscellaneous_group
  * \fn unsigned short wimaxll_le16_to_cpu(unsigned short le16)
@@ -445,7 +445,7 @@ unsigned short wimaxll_le16_to_cpu(unsigned short le16)
 
 static inline	// ugly hack for doxygen
 /**
- * Convert a little-endian 32 bits to cpu order.
+ * Convert a cpu-order 32 bits to little endian.
  *
  * \ingroup miscellaneous_group
  * \fn unsigned long wimaxll_cpu_to_le32(unsigned long x)
@@ -466,7 +466,7 @@ unsigned long wimaxll_cpu_to_le32(unsigned long x)
 
 static inline	// ugly hack for doxygen
 /**
- * Convert a cpu-order 32 bits to little endian.
+ * Convert a little-endian 32 bits to cpu order.
  *
  * \ingroup miscellaneous_group
  * \fn unsigned long wimaxll_le32_to_cpu(unsigned long le32)
@@ -478,6 +478,90 @@ unsigned long wimaxll_le32_to_cpu(unsigned long le32)
 	cpu = le32;
 #elif __BYTE_ORDER == __BIG_ENDIAN
 	cpu = wimaxll_swap_32(le32);
+#else
+#error ERROR: unknown byte sex - FIXME
+#endif
+	return cpu;
+}
+
+
+static inline	// ugly hack for doxygen
+/**
+ * Convert a cpu-order 16 bits to big endian.
+ *
+ * \ingroup miscellaneous_group
+ * \fn unsigned short wimaxll_cpu_to_be16(unsigned short x)
+ */
+unsigned short wimaxll_cpu_to_be16(unsigned short x)
+{
+	unsigned short be16;
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+	be16 = wimaxll_swap_16(x);
+#elif __BYTE_ORDER == __BIG_ENDIAN
+	be16 = x;
+#else
+#error ERROR: unknown byte sex - FIXME
+#endif
+	return be16;
+}
+
+
+static inline	// ugly hack for doxygen
+/**
+ * Convert a big-endian 16 bits to cpu order.
+ *
+ * \ingroup miscellaneous_group
+ * \fn unsigned short wimaxll_be16_to_cpu(unsigned short be16)
+ */
+unsigned short wimaxll_be16_to_cpu(unsigned short be16)
+{
+	unsigned short cpu;
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+	cpu = wimaxll_swap_16(be16);
+#elif __BYTE_ORDER == __BIG_ENDIAN
+	cpu = be16;
+#else
+#error ERROR: unknown byte sex - FIXME
+#endif
+	return cpu;
+}
+
+
+static inline	// ugly hack for doxygen
+/**
+ * Convert a cpu-order 32 bits to big endian.
+ *
+ * \ingroup miscellaneous_group
+ * \fn unsigned long wimaxll_cpu_to_be32(unsigned long x)
+ */
+unsigned long wimaxll_cpu_to_be32(unsigned long x)
+{
+	unsigned long be32;
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+	be32 = wimaxll_swap_32(x);
+#elif __BYTE_ORDER == __BIG_ENDIAN
+	be32 = x;
+#else
+#error ERROR: unknown byte sex - FIXME
+#endif
+	return be32;
+}
+
+
+static inline	// ugly hack for doxygen
+/**
+ * Convert a big-endian 32 bits to cpu order.
+ *
+ * \ingroup miscellaneous_group
+ * \fn unsigned long wimaxll_be32_to_cpu(unsigned long be32)
+ */
+unsigned long wimaxll_be32_to_cpu(unsigned long be32)
+{
+	unsigned long cpu;
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+	cpu = be32;
+#elif __BYTE_ORDER == __BIG_ENDIAN
+	cpu = wimaxll_swap_32(be32);
 #else
 #error ERROR: unknown byte sex - FIXME
 #endif
