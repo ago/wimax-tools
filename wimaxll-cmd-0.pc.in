@@ -1,0 +1,15 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+# Any file wimaxll-pl-*.so in this directory is considered to be a
+# plugin for wimaxll.
+plugindir=${libdir}/wimax-tools/plugins
+
+Name: wimaxll-cmd
+Description: WiMAX low level control utility plugin API
+Requires: libwimaxll-0
+Version: @PACKAGE_VERSION@
+Libs: -module -avoid-version -export-symbols-regex plugin
+Cflags: -I${includedir}

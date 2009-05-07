@@ -139,6 +139,7 @@ AC_OUTPUT(Makefile
           libwimaxll-0-uninstalled.pc
           libwimaxll-i2400m-0.pc
           libwimaxll-i2400m-0-uninstalled.pc
+          wimaxll-cmd-0.pc
           bin/Makefile
           bin/wimax-tools-version
           include/Makefile
