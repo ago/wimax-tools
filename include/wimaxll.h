@@ -568,4 +568,11 @@ unsigned long wimaxll_be32_to_cpu(unsigned long be32)
 	return cpu;
 }
 
+
+#define __WIMAXLL_ALIGN2_MASK(n, m) (((n) + (m)) & ~(m))
+/**
+ * Return the value \e n aligned to an order-of-two value \a o2.
+ */
+#define WIMAXLL_ALIGN2(n, o2) __WIMAXLL_ALIGN2_MASK(n, (typeof(n)) (o2) - 1)
+
 #endif /* #ifndef __lib_wimaxll_h__ */
