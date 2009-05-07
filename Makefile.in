@@ -37,9 +37,9 @@ DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(srcdir)/libwimaxll-0-uninstalled.pc.in \
 	$(srcdir)/libwimaxll-0.pc.in \
 	$(srcdir)/libwimaxll-i2400m-0-uninstalled.pc.in \
-	$(srcdir)/libwimaxll-i2400m-0.pc.in $(top_srcdir)/configure \
-	INSTALL config.guess config.sub depcomp install-sh ltmain.sh \
-	missing
+	$(srcdir)/libwimaxll-i2400m-0.pc.in \
+	$(srcdir)/wimaxll-cmd-0.pc.in $(top_srcdir)/configure INSTALL \
+	config.guess config.sub depcomp install-sh ltmain.sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -49,7 +49,8 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/config.h
 CONFIG_CLEAN_FILES = libwimaxll-0.pc libwimaxll-0-uninstalled.pc \
-	libwimaxll-i2400m-0.pc libwimaxll-i2400m-0-uninstalled.pc
+	libwimaxll-i2400m-0.pc libwimaxll-i2400m-0-uninstalled.pc \
+	wimaxll-cmd-0.pc
 SOURCES =
 DIST_SOURCES =
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
@@ -205,7 +206,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 pkgconfigdir = ${libdir}/pkgconfig
 SUBDIRS = include lib src bin doc
-pkgconfig_DATA = libwimaxll-0.pc libwimaxll-i2400m-0.pc
+pkgconfig_DATA = libwimaxll-0.pc libwimaxll-i2400m-0.pc wimaxll-cmd-0.pc
 MAINTAINERCLEANFILES = Makefile.in \
 	aclocal.m4 configure config.h.in config.sub config.guess \
 	ltmain.sh depcomp missing install-sh mkinstalldirs
@@ -253,6 +254,8 @@ libwimaxll-0-uninstalled.pc: $(top_builddir)/config.status $(srcdir)/libwimaxll-
 libwimaxll-i2400m-0.pc: $(top_builddir)/config.status $(srcdir)/libwimaxll-i2400m-0.pc.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 libwimaxll-i2400m-0-uninstalled.pc: $(top_builddir)/config.status $(srcdir)/libwimaxll-i2400m-0-uninstalled.pc.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+wimaxll-cmd-0.pc: $(top_builddir)/config.status $(srcdir)/wimaxll-cmd-0.pc.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 
 mostlyclean-libtool:

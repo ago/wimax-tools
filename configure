@@ -11774,7 +11774,7 @@ fi
 
 
 
-ac_config_files="$ac_config_files Makefile doc/Makefile doc/doxygen.conf libwimaxll-0.pc libwimaxll-0-uninstalled.pc libwimaxll-i2400m-0.pc libwimaxll-i2400m-0-uninstalled.pc bin/Makefile bin/wimax-tools-version include/Makefile include/wimaxll-version.h include/wimaxll/Makefile include/wimaxll/version.h lib/Makefile src/Makefile"
+ac_config_files="$ac_config_files Makefile doc/Makefile doc/doxygen.conf libwimaxll-0.pc libwimaxll-0-uninstalled.pc libwimaxll-i2400m-0.pc libwimaxll-i2400m-0-uninstalled.pc wimaxll-cmd-0.pc bin/Makefile bin/wimax-tools-version include/Makefile include/wimaxll-version.h include/wimaxll/Makefile include/wimaxll/version.h lib/Makefile src/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -12674,6 +12674,7 @@ do
     "libwimaxll-0-uninstalled.pc") CONFIG_FILES="$CONFIG_FILES libwimaxll-0-uninstalled.pc" ;;
     "libwimaxll-i2400m-0.pc") CONFIG_FILES="$CONFIG_FILES libwimaxll-i2400m-0.pc" ;;
     "libwimaxll-i2400m-0-uninstalled.pc") CONFIG_FILES="$CONFIG_FILES libwimaxll-i2400m-0-uninstalled.pc" ;;
+    "wimaxll-cmd-0.pc") CONFIG_FILES="$CONFIG_FILES wimaxll-cmd-0.pc" ;;
     "bin/Makefile") CONFIG_FILES="$CONFIG_FILES bin/Makefile" ;;
     "bin/wimax-tools-version") CONFIG_FILES="$CONFIG_FILES bin/wimax-tools-version" ;;
     "include/Makefile") CONFIG_FILES="$CONFIG_FILES include/Makefile" ;;
