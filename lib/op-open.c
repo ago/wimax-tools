@@ -405,6 +405,8 @@ struct wimaxll_handle *wimaxll_open(const char *device)
 			    result, nl_geterror());
 		goto error_nl_handle_alloc_tx;
 	}
+	nl_socket_enable_msg_peek(wmx->nlh_tx);
+
 	result = nl_connect(wmx->nlh_tx, NETLINK_GENERIC);
 	if (result < 0) {
 		wimaxll_msg(wmx, "E: TX: cannot connect netlink: %d (%s)\n",
@@ -426,6 +428,7 @@ struct wimaxll_handle *wimaxll_open(const char *device)
 			    result, nl_geterror());
 		goto error_nl_connect_rx;
 	}
+	nl_socket_enable_msg_peek(wmx->nlh_rx);
 
 	result = wimaxll_gnl_resolve(wmx);	/* Get genl information */
 	if (result < 0)				/* fills wmx->mcg_id */
