@@ -336,6 +336,7 @@ void wimaxll_msg_free(void *);
 /* generic API */
 int wimaxll_rfkill(struct wimaxll_handle *, enum wimax_rf_state);
 int wimaxll_reset(struct wimaxll_handle *);
+int wimaxll_state_get(struct wimaxll_handle *);
 
 void wimaxll_get_cb_state_change(
 	struct wimaxll_handle *, wimaxll_state_change_cb_f *,

@@ -17,6 +17,7 @@ libwimaxll_sources = 		\
         op-msg.c		\
         op-reset.c		\
         op-rfkill.c		\
+        op-state-get.c		\
         re-state-change.c	\
 	wimax.c
 
