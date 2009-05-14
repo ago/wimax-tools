@@ -34,6 +34,7 @@ plugindir = $(pkglibdir)/plugins
 plugin_LTLIBRARIES =		\
 	wimaxll-pl-reset.la	\
 	wimaxll-pl-rfkill.la	\
+	wimaxll-pl-state-get.la	\
 	wimaxll-pl-wfsc.la
 
 plugin_LDFLAGS = -no-undefined -module -avoid-version \
@@ -41,4 +42,5 @@ plugin_LDFLAGS = -no-undefined -module -avoid-version \
 
 wimaxll_pl_reset_la_LDFLAGS = $(plugin_LDFLAGS)
 wimaxll_pl_rfkill_la_LDFLAGS = $(plugin_LDFLAGS)
+wimaxll_pl_state_get_la_LDFLAGS = $(plugin_LDFLAGS)
 wimaxll_pl_wfsc_la_LDFLAGS = $(plugin_LDFLAGS)
