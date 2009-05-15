@@ -123,6 +123,11 @@ fi
 AC_SUBST(I2400M_INCLUDES, "-I${LINUX_KERNEL}/include")
 AC_SUBST(LINUX_INCLUDE_PATH, "${LINUX_KERNEL}/include")
 
+AC_CHECK_DECL(WIMAX_GNL_OP_STATE_GET,
+              AC_MSG_NOTICE([Kernel / WiMAX driver is ok (> 2.6.30); has WIMAX_GNL_OP_STATE_GET]),
+              AC_MSG_ERROR([Kernel / WiMAX driver is too old (<= 2.6.30); missing WIMAX_GNL_OP_STATE_GET]), 
+              [#include <$LINUX_INCLUDE_PATH/linux/wimax.h>])
+
 AC_CHECK_LIB(dl, dlopen, dummy=yes,
 			AC_MSG_ERROR(dynamic linking loader is required))
 
