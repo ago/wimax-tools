@@ -1,3 +1,16 @@
+Changes in v1.4.2:
+
+ - Replace most commands with a single, unified one (wimaxll), plugin
+   expandable and much more consistent.
+
+ - Introduce a separate library (libwimaxll-i2400m) with helpers
+   specific to the Intel 2400 WiMAX Connection.
+
+ - Many helpers added to libwimaxll.
+
+ - Add ability to open a handle that will listen for callbacks from
+   any interface.
+
 Changes in v1.4.1:
 
  - Fail to open if the interface is not WiMAX

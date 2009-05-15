@@ -13,6 +13,8 @@ bin_SCRIPTS = \
 	wimaxll-rfkill			\
 	wimaxll-wait-for-state-change
 
+EXTRA_DIST = $(bin_SCRIPTS)
+
 bin_PROGRAMS = 				\
 	wimaxll
 
@@ -29,6 +31,8 @@ wimaxll.ver: wimaxll.exp
 	echo "{ global:" > $@
 	cat $< | sed -e "s/\(.*\)/\1;/" >> $@
 	echo "local: *; };" >> $@
+
+CLEANFILES = wimaxll.exp wimaxll.ver
 
 plugindir = $(pkglibdir)/plugins
 plugin_LTLIBRARIES =		\

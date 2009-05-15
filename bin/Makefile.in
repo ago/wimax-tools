@@ -240,10 +240,12 @@ bin_SCRIPTS = \
 	wimaxll-rfkill			\
 	wimaxll-wait-for-state-change
 
+EXTRA_DIST = $(bin_SCRIPTS)
 AM_CFLAGS = @GLIB_CFLAGS@ -DPLUGINDIR=\""$(plugindir)"\"
 AM_LDFLAGS = @GLIB_LIBS@ ../lib/libwimaxll.la $(LIBNL1_LIBS)
 wimaxll_LDFLAGS = $(AM_LDFLAGS) -ldl -Wl,--export-dynamic -Wl,--version-script=wimaxll.ver
 wimaxll_DEPENDENCIES = wimaxll.ver
+CLEANFILES = wimaxll.exp wimaxll.ver
 plugindir = $(pkglibdir)/plugins
 plugin_LTLIBRARIES = \
 	wimaxll-pl-reset.la	\
@@ -515,6 +517,7 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
