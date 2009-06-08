@@ -72,7 +72,8 @@ libwimaxll_i2400m_la_CFLAGS = $(AM_CFLAGS)
 # REVISION: inc for changes that do not affect the external interface
 # AGE: inc for added interfaces
 #      set to zero if removed existing interfaces
-libwimaxll_i2400m_la_LDFLAGS = -lwimaxll -lpthread -version-info 1:0:1 $(LIBNL1_LIBS)
+libwimaxll_i2400m_la_LIBADD = libwimaxll.la
+libwimaxll_i2400m_la_LDFLAGS = -lpthread -version-info 1:0:1 $(LIBNL1_LIBS)
 
 lib_LTLIBRARIES += libwimaxll-i2400m.la
 lib_LIBRARIES += libwimaxll-i2400m.a

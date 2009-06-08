@@ -69,7 +69,7 @@ am_libwimaxll_a_OBJECTS = $(am__objects_2)
 libwimaxll_a_OBJECTS = $(am_libwimaxll_a_OBJECTS)
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libwimaxll_i2400m_la_LIBADD =
+libwimaxll_i2400m_la_DEPENDENCIES = libwimaxll.la
 am__objects_3 = libwimaxll_i2400m_la-i2400m.lo
 am_libwimaxll_i2400m_la_OBJECTS = $(am__objects_3)
 libwimaxll_i2400m_la_OBJECTS = $(am_libwimaxll_i2400m_la_OBJECTS)
@@ -286,7 +286,8 @@ libwimaxll_i2400m_la_CFLAGS = $(AM_CFLAGS)
 # REVISION: inc for changes that do not affect the external interface
 # AGE: inc for added interfaces
 #      set to zero if removed existing interfaces
-libwimaxll_i2400m_la_LDFLAGS = -lwimaxll -lpthread -version-info 1:0:1 $(LIBNL1_LIBS)
+libwimaxll_i2400m_la_LIBADD = libwimaxll.la
+libwimaxll_i2400m_la_LDFLAGS = -lpthread -version-info 1:0:1 $(LIBNL1_LIBS)
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
