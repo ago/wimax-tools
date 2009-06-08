@@ -252,10 +252,10 @@ int i2400m_create(struct i2400m **_i2400m, const char *ifname,
 	int result;
 	struct i2400m *i2400m;
 
+	result = -ENOMEM;
 	i2400m = calloc(sizeof(*i2400m), 1);
 	if (i2400m == NULL)
 		goto error_calloc;
-	result = -ENODEV;
 	i2400m->wmx = wimaxll_open(ifname);
 	if (i2400m->wmx == NULL) {
 		result = -errno;
