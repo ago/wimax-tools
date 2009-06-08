@@ -1,3 +1,9 @@
+Changes in v1.4.2.1:
+
+ - Fix libwimaxll dependency in libwimaxll-i2400m (autotools)
+
+ - Distribute bootstrap*
+
 Changes in v1.4.2:
 
  - Replace most commands with a single, unified one (wimaxll), plugin
