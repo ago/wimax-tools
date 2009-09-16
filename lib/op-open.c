@@ -115,6 +115,8 @@ static
  *
  * - >= 0 to indicate message processing should continue
  * - -EBUSY to indicate message processing should stop
+ * - -ENODEV a message was received, but it was for another device,
+ *   not the one this handle is listening to.
  * - any other < 0 error code to indicate an error and that the
  *   message should be skipped.
  *
@@ -243,6 +245,9 @@ ssize_t wimaxll_recv(struct wimaxll_handle *wmx)
 		result = nl_recvmsgs(wmx->nlh_rx, cb);
 		d_printf(3, wmx, "I: ctx.result %zd result %zd\n",
 			 ctx.result, result);
+		/* if this was a message for another device, we skip it */
+		if (ctx.result == -ENODEV)
+			ctx.result = -EINPROGRESS;
 	} while ((ctx.result == -EINPROGRESS)
 		 && result > 0);
 	if (result < 0)
