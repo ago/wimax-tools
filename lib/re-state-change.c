@@ -137,7 +137,7 @@ int wimaxll_gnl_handle_state_change(struct wimaxll_handle *wmx,
 	result = genlmsg_parse(nl_hdr, 0, tb, WIMAX_GNL_ATTR_MAX,
 			       wimaxll_gnl_re_state_change_policy);
 	if (result < 0) {
-		wimaxll_msg(wmx, "E: %s: genlmsg_parse() failed: %d\n",
+		wimaxll_msg(wmx, "E: %s: genlmsg_parse() failed: %zd\n",
 			  __func__, result);
 		goto error_parse;
 	}

@@ -105,7 +105,7 @@ int wimaxll_reset(struct wimaxll_handle *wmx)
 			WIMAX_GNL_OP_RESET, WIMAX_GNL_VERSION) == NULL) {
 		result = -ENOMEM;
 		wimaxll_msg(wmx, "E: RESET: error preparing message: "
-			  "%d 0x%08x\n", result, result);
+			  "%zd 0x%08x\n", result, (unsigned int) result);
 		goto error_msg_prep;
 	}
 	nla_put_u32(msg, WIMAX_GNL_RESET_IFIDX, (__u32) wmx->ifidx);
@@ -124,6 +124,6 @@ error_msg_send:
 	nlmsg_free(msg);
 error_msg_alloc:
 error_not_any:
-	d_fnend(3, wmx, "(wmx %p) = %d\n", wmx, result);
+	d_fnend(3, wmx, "(wmx %p) = %zd\n", wmx, result);
 	return result;
 }

@@ -110,7 +110,7 @@ int wimaxll_rfkill(struct wimaxll_handle *wmx, enum wimax_rf_state state)
 			WIMAX_GNL_OP_RFKILL, WIMAX_GNL_VERSION) == NULL) {
 		result = -ENOMEM;
 		wimaxll_msg(wmx, "E: RFKILL: error preparing message: "
-			  "%d 0x%08x\n", result, result);
+			  "%zd 0x%08x\n", result, (unsigned int) result);
 		goto error_msg_prep;
 	}
 	nla_put_u32(msg, WIMAX_GNL_RFKILL_IFIDX, (__u32) wmx->ifidx);
@@ -130,6 +130,6 @@ error_msg_send:
 	nlmsg_free(msg);
 error_msg_alloc:
 error_not_any:
-	d_fnend(3, wmx, "(wmx %p state %u) = %d\n", wmx, state, result);
+	d_fnend(3, wmx, "(wmx %p state %u) = %zd\n", wmx, state, result);
 	return result;
 }

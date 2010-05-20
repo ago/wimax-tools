@@ -175,7 +175,7 @@ int wimaxll_gnl_handle_msg_to_user(struct wimaxll_handle *wmx,
 	result = genlmsg_parse(nl_hdr, 0, tb, WIMAX_GNL_ATTR_MAX,
 			       wimaxll_gnl_msg_from_user_policy);
 	if (result < 0) {
-		wimaxll_msg(wmx, "E: %s: genlmsg_parse() failed: %d\n",
+		wimaxll_msg(wmx, "E: %s: genlmsg_parse() failed: %zd\n",
 			  __func__, result);
 		goto error_parse;
 	}
@@ -209,7 +209,7 @@ int wimaxll_gnl_handle_msg_to_user(struct wimaxll_handle *wmx,
 
 	d_printf(1, wmx, "D: CRX genlmsghdr cmd %u version %u\n",
 		 gnl_hdr->cmd, gnl_hdr->version);
-	d_printf(1, wmx, "D: CRX msg from kernel %u bytes pipe %s\n",
+	d_printf(1, wmx, "D: CRX msg from kernel %zu bytes pipe %s\n",
 		 size, pipe_name);
 	d_dump(2, wmx, data, size);
 
@@ -227,7 +227,7 @@ int wimaxll_gnl_handle_msg_to_user(struct wimaxll_handle *wmx,
 	wmx->ifidx = dest_ifidx;
 error_no_attrs:
 error_parse:
-	d_fnend(7, wmx, "(wmx %p msg %p) = %d\n", wmx, msg, result);
+	d_fnend(7, wmx, "(wmx %p msg %p) = %zd\n", wmx, msg, result);
 	return result;
 }
 
@@ -426,7 +426,7 @@ ssize_t wimaxll_msg_write(struct wimaxll_handle *wmx,
 			  WIMAX_GNL_OP_MSG_FROM_USER, WIMAX_GNL_VERSION);
 	if (msg == NULL) {
 		result = nl_get_errno();
-		wimaxll_msg(wmx, "E: %s: error preparing message: %d\n",
+		wimaxll_msg(wmx, "E: %s: error preparing message: %zd\n",
 			  __func__, result);
 		goto error_msg_prep;
 	}
@@ -444,13 +444,13 @@ ssize_t wimaxll_msg_write(struct wimaxll_handle *wmx,
 
 	result = nl_send_auto_complete(wmx->nlh_tx, nl_msg);
 	if (result < 0) {
-		wimaxll_msg(wmx, "E: error sending message: %d\n", result);
+		wimaxll_msg(wmx, "E: error sending message: %zd\n", result);
 		goto error_msg_send;
 	}
 
 	result = wimaxll_wait_for_ack(wmx);	/* Get the ACK from netlink */
 	if (result < 0)
-		wimaxll_msg(wmx, "E: %s: generic netlink ack failed: %d\n",
+		wimaxll_msg(wmx, "E: %s: generic netlink ack failed: %zd\n",
 			  __func__, result);
 error_msg_send:
 error_msg_prep:
