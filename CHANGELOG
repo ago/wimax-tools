@@ -2,6 +2,8 @@ Changes in v1.4.4:
 
  - Misc small fixes
 
+ - Add RPM spec files
+
 Changes in v1.4.3:
 
  - Fixes for systems with multiple WiMAX devices
