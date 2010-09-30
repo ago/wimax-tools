@@ -1,0 +1,36 @@
+Name: wimax-tools
+Summary: WiMAX Low Level Tools
+Version: @PACKAGE_VERSION@
+Release: 1
+Group: Applications/System
+License: BSD
+URL: http://linuxwimax.org
+Sources:
+    - wimax-tools-%{version}.tar.gz
+Description: |
+    Tools for diagnosing and testing WiMAX connectivity.
+    These tools work at a very low level using the Linux kernel's WiMAX
+    stack.
+    This package does not provide high level connectivity support, but
+    packages that do so might depend on it.
+
+PkgConfigBR:
+    - libnl-1
+    - glib-2.0
+SubPackages:
+    - Name: lib
+      Summary: Runtime libraries for WiMAX Low Level Tools
+      Group: System/Libraries
+      Description: |
+          Runtime libraries for the WiMAX Low Level Tools.
+          Other applications use these libraries to gain access to the WiMAX
+          kernel stack.
+
+    - Name: devel
+      Summary: Development files for WiMAX Low Level Tools
+      Group: Development/Libraries
+      Description: |
+          Development support for the WiMAX Low Level Tools.
+          This package provides the header files and libraries needed to compile
+          programs that will use the runtime libraries provided by the WiMAX Low
+          Level Tools.

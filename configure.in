@@ -138,6 +138,8 @@ AC_SUBST(GLIB_LIBS)
 
 
 AC_OUTPUT(Makefile
+          wimax-tools.spec
+          wimax-tools.yaml
           doc/Makefile
           doc/doxygen.conf
           libwimaxll-0.pc

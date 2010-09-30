@@ -40,6 +40,7 @@ DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/libwimaxll-0.pc.in \
 	$(srcdir)/libwimaxll-i2400m-0-uninstalled.pc.in \
 	$(srcdir)/libwimaxll-i2400m-0.pc.in \
+	$(srcdir)/wimax-tools.spec.in $(srcdir)/wimax-tools.yaml.in \
 	$(srcdir)/wimaxll-cmd-0.pc.in $(top_srcdir)/configure INSTALL \
 	config.guess config.sub depcomp install-sh ltmain.sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -50,9 +51,9 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/config.h
-CONFIG_CLEAN_FILES = libwimaxll-0.pc libwimaxll-0-uninstalled.pc \
-	libwimaxll-i2400m-0.pc libwimaxll-i2400m-0-uninstalled.pc \
-	wimaxll-cmd-0.pc
+CONFIG_CLEAN_FILES = wimax-tools.spec wimax-tools.yaml libwimaxll-0.pc \
+	libwimaxll-0-uninstalled.pc libwimaxll-i2400m-0.pc \
+	libwimaxll-i2400m-0-uninstalled.pc wimaxll-cmd-0.pc
 CONFIG_CLEAN_VPATH_FILES =
 SOURCES =
 DIST_SOURCES =
@@ -294,6 +295,10 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	$(am__cd) $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
 $(am__aclocal_m4_deps):
+wimax-tools.spec: $(top_builddir)/config.status $(srcdir)/wimax-tools.spec.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+wimax-tools.yaml: $(top_builddir)/config.status $(srcdir)/wimax-tools.yaml.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
 libwimaxll-0.pc: $(top_builddir)/config.status $(srcdir)/libwimaxll-0.pc.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 libwimaxll-0-uninstalled.pc: $(top_builddir)/config.status $(srcdir)/libwimaxll-0-uninstalled.pc.in
