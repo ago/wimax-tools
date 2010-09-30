@@ -62,13 +62,6 @@ void wimaxll_vlmsg_default(struct wimaxll_handle *wmx, unsigned level,
 {
 	FILE *f = level != W_PRINT? stderr : stdout;
 
-	/* Backwards compat */
-	if (wimaxll_vmsg) {
-		if (header)
-			wimaxll_vmsg(header, NULL);
-		wimaxll_vmsg(fmt, vargs);
-		return;
-	}
 	if (level == W_PRINT)
 		f = stdout;
 	else {

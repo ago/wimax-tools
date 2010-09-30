@@ -348,16 +348,6 @@ ssize_t wimaxll_wait_for_state_change(struct wimaxll_handle *wmx,
 				      enum wimax_st *old_state,
 				      enum wimax_st *new_state);
 
-/*
- * Basic diagnostics
- *
- * Deprecated, see wimaxll/log.h 
- */
-extern void (*wimaxll_vmsg)(const char *, va_list)
-	__attribute__((deprecated));
-void wimaxll_vmsg_stderr(const char *, va_list)
-	__attribute__((deprecated));
-
 
 /**
  * \defgroup miscellaneous_group Miscellaneous utilities

@@ -211,51 +211,6 @@ void wimaxll_vmsg_stderr(const char *fmt, va_list vargs)
 }
 
 
-
-/**
- * Print library diagnostics messages [backend]
- *
- * \deprecated { use wimaxll_vlmsg_cb }
- * 
- * @param fmt printf-like format
- * @param vargs variable-argument list as created by
- *     stdargs.h:va_list() that will be formatted according to \e
- *     fmt.
- *
- * Prints/writes the \e libwimaxll's diagnostics messages to a
- * destination as selected by the user of the library.
- *
- * \note This function pointer must be set \b before calling any other
- *     \e libwimaxll function.
- *
- * By default, diagnostics are printed with wimaxll_vmsg_stderr() to
- * \a stderr.
- *
- * For example, to deliver diagnostics to syslog:
- *
- * @code
- * #include <syslog.h>
- * ...
- * static
- * void wimaxll_vmsg_syslog(const char *fmt, va_list vargs)
- * {
- *         vsyslog(LOG_MAKEPRI(LOG_USER, LOG_INFO), fmt, vargs);
- * }
- * ...
- * wimaxll_vmsg = wimaxll_vmsg_syslog();
- * ...
- * wimaxll_open(BLAH);
- * @endcode
- *
- * \ingroup diagnostics_group
- * \internal
- *
- * The internal function wimaxll_msg() is used as as a frontend to
- * this function.
- */
-void (*wimaxll_vmsg)(const char *fmt, va_list vargs) = NULL;
-
-
 /**
  * Return the name of a the system's WiMAX interface associated to an
  * open handle
