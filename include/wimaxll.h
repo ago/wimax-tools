@@ -307,6 +307,133 @@ typedef int (*wimaxll_state_change_cb_f)(
 	enum wimax_st old_state, enum wimax_st new_state);
 
 
+
+/**
+ * General structure for storing callback context
+ *
+ * \ingroup callbacks
+ *
+ * Callbacks set by the user receive a user-set pointer to a context
+ * structure. The user can wrap this struct in a bigger context struct
+ * and use wimaxll_container_of() during the callback to obtain its
+ * pointer.
+ *
+ * Usage:
+ *
+ * \code
+ * ...
+ * struct wimaxll_handle *wmx;
+ * ...
+ * struct my_context {
+ *         struct wimaxll_cb_ctx ctx;
+ *         <my data>
+ * } my_ctx = {
+ *        .ctx = WIMAXLL_CB_CTX_INIT(wmx),
+ *        <my data initialization>
+ * };
+ * ...
+ * wimaxll_set_cb_SOMECALLBACK(wmx, my_callback, &my_ctx.ctx);
+ * ...
+ * result = wimaxll_pipe_read(wmx);
+ * ...
+ *
+ * // When my_callback() is called
+ * my_callback(wmx, ctx, ...)
+ * {
+ *         struct my_context *my_ctx = wimaxll_container_of(
+ *                ctx, struct my_callback, ctx);
+ *         ...
+ *         // do stuff with my_ctx
+ * }
+ * \endcode
+ *
+ * \param wmx WiMAX handle this context refers to (for usage by the
+ *     callback).
+ * \param result Result of the handling of the message. For usage by
+ *     the callback. Should not be set to -EINPROGRESS, as this will
+ *     be interpreted by the message handler as no processing was done
+ *     on the message.
+ *
+ * \internal
+ *
+ * \param msg_done This is used internally to mark when the acks (or
+ *     errors) for a message have been received and the message
+ *     receiving loop can be considered done.
+ */
+struct wimaxll_cb_ctx {
+	struct wimaxll_handle *wmx;
+	ssize_t result;
+	unsigned msg_done:1;	/* internal */
+};
+
+
+/**
+ * Initialize a definition of struct wimaxll_cb_ctx
+ *
+ * \param _wmx pointer to the WiMAX device handle this will be
+ *     associated to
+ *
+ * Use as:
+ *
+ * \code
+ * struct wimaxll_handle *wmx;
+ * ...
+ * struct wimaxll_cb_ctx my_context = WIMAXLL_CB_CTX_INIT(wmx);
+ * \endcode
+ *
+ * \ingroup callbacks
+ */
+#define WIMAXLL_CB_CTX_INIT(_wmx) {	\
+	.wmx = (_wmx),				\
+	.result = -EINPROGRESS,			\
+}
+
+
+static inline	// ugly workaround for doxygen
+/**
+ * Initialize a struct wimaxll_cb_ctx
+ *
+ * \param ctx Pointer to the struct wimaxll_cb_ctx.
+ * \param wmx pointer to the WiMAX device handle this will be
+ *     associated to
+ *
+ * Use as:
+ *
+ * \code
+ * struct wimaxll_handle *wmx;
+ * ...
+ * struct wimaxll_cb_ctx my_context;
+ * ...
+ * wimaxll_cb_ctx(&my_context, wmx);
+ * \endcode
+ *
+ * \ingroup callbacks
+ * \fn static void wimaxll_cb_ctx_init(struct wimaxll_cb_ctx *ctx, struct wimaxll_handle *wmx)
+ */
+void wimaxll_cb_ctx_init(struct wimaxll_cb_ctx *ctx, struct wimaxll_handle *wmx)
+{
+	ctx->wmx = wmx;
+	ctx->result = -EINPROGRESS;
+}
+
+
+static inline	// ugly workaround for doxygen
+/**
+ * Set the result value in a callback context
+ *
+ * \param ctx Context where to set -- if NULL, no action will be taken
+ * \param val value to set for \a result
+ *
+ * \ingroup callbacks
+ * \fn static void wimaxll_cb_maybe_set_result(struct wimaxll_cb_ctx *ctx, int val)
+ */
+void wimaxll_cb_maybe_set_result(struct wimaxll_cb_ctx *ctx, int val)
+{
+	if (ctx != NULL && ctx->result == -EINPROGRESS)
+		ctx->result = val;
+}
+
+
 /* Basic handle management */
 struct wimaxll_handle *wimaxll_open(const char *device_name);
 void *wimaxll_priv_get(struct wimaxll_handle *);
