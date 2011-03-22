@@ -8,4 +8,5 @@ MAINTAINERCLEANFILES = Makefile.in \
 	aclocal.m4 configure config.h.in config.sub config.guess \
 	ltmain.sh depcomp missing install-sh mkinstalldirs
 
-EXTRADIST = bootstrap bootstrap-configure
+EXTRA_DIST = bootstrap bootstrap-configure mk-archive lib/config.h.in \
+	.gitignore CHANGELOG LICENSE bootstrap bootstrap-configure

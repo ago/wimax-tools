@@ -74,8 +74,9 @@ am__nobase_list = $(am__nobase_strip_setup); \
 am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
-am__installdirs = "$(DESTDIR)$(wimaxllincludedir)"
-HEADERS = $(wimaxllinclude_HEADERS)
+am__installdirs = "$(DESTDIR)$(wimaxllincludedir)" \
+	"$(DESTDIR)$(wimaxllincludedir)"
+HEADERS = $(nodist_wimaxllinclude_HEADERS) $(wimaxllinclude_HEADERS)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -205,9 +206,9 @@ wimaxllincludedir = @includedir@/wimaxll
 wimaxllinclude_HEADERS = \
 	cmd.h			\
 	i2400m.h		\
-	log.h			\
-	version.h
+	log.h
 
+nodist_wimaxllinclude_HEADERS = version.h
 all: all-am
 
 .SUFFIXES:
@@ -249,6 +250,26 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
+install-nodist_wimaxllincludeHEADERS: $(nodist_wimaxllinclude_HEADERS)
+	@$(NORMAL_INSTALL)
+	test -z "$(wimaxllincludedir)" || $(MKDIR_P) "$(DESTDIR)$(wimaxllincludedir)"
+	@list='$(nodist_wimaxllinclude_HEADERS)'; test -n "$(wimaxllincludedir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(wimaxllincludedir)'"; \
+	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(wimaxllincludedir)" || exit $$?; \
+	done
+
+uninstall-nodist_wimaxllincludeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(nodist_wimaxllinclude_HEADERS)'; test -n "$(wimaxllincludedir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	test -n "$$files" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(wimaxllincludedir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(wimaxllincludedir)" && rm -f $$files
 install-wimaxllincludeHEADERS: $(wimaxllinclude_HEADERS)
 	@$(NORMAL_INSTALL)
 	test -z "$(wimaxllincludedir)" || $(MKDIR_P) "$(DESTDIR)$(wimaxllincludedir)"
@@ -356,7 +377,7 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(HEADERS)
 installdirs:
-	for dir in "$(DESTDIR)$(wimaxllincludedir)"; do \
+	for dir in "$(DESTDIR)$(wimaxllincludedir)" "$(DESTDIR)$(wimaxllincludedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -404,7 +425,8 @@ info: info-am
 
 info-am:
 
-install-data-am: install-wimaxllincludeHEADERS
+install-data-am: install-nodist_wimaxllincludeHEADERS \
+	install-wimaxllincludeHEADERS
 
 install-dvi: install-dvi-am
 
@@ -448,7 +470,8 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-wimaxllincludeHEADERS
+uninstall-am: uninstall-nodist_wimaxllincludeHEADERS \
+	uninstall-wimaxllincludeHEADERS
 
 .MAKE: install-am install-strip
 
@@ -458,12 +481,14 @@ uninstall-am: uninstall-wimaxllincludeHEADERS
 	html-am info info-am install install-am install-data \
 	install-data-am install-dvi install-dvi-am install-exec \
 	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip \
+	install-info-am install-man \
+	install-nodist_wimaxllincludeHEADERS install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
 	install-wimaxllincludeHEADERS installcheck installcheck-am \
 	installdirs maintainer-clean maintainer-clean-generic \
 	mostlyclean mostlyclean-generic mostlyclean-libtool pdf pdf-am \
 	ps ps-am tags uninstall uninstall-am \
+	uninstall-nodist_wimaxllincludeHEADERS \
 	uninstall-wimaxllincludeHEADERS
 
 

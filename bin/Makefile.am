@@ -7,13 +7,13 @@ INCLUDES = \
 
 LDADD = ../lib/libwimaxll.la $(LIBNL1_LIBS)
 
-bin_SCRIPTS = \
-	wimax-tools-version		\
+dist_bin_SCRIPTS = 			\
 	wimaxll-reset			\
 	wimaxll-rfkill			\
 	wimaxll-wait-for-state-change
 
-EXTRA_DIST = $(bin_SCRIPTS)
+nodist_bin_SCRIPTS = 			\
+	wimax-tools-version
 
 bin_PROGRAMS = 				\
 	wimaxll
