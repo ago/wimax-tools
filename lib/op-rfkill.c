@@ -98,8 +98,8 @@ int wimaxll_rfkill(struct wimaxll_handle *wmx, enum wimax_rf_state state)
 	result = -EBADF;
 	if (wmx->ifidx == 0)
 		goto error_not_any;
-	msg = nlmsg_new();
-	if (msg == NULL) {
+	msg = nlmsg_alloc();
+	if (!msg) {
 		result = errno;
 		wimaxll_msg(wmx, "E: RFKILL: cannot allocate generic netlink "
 			  "message: %m\n");

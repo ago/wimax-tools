@@ -78,7 +78,6 @@
 #define D_LOCAL 0
 #include "debug.h"
 
-
 /*
  * Netlink callback for (disabled) sequence check
  *
@@ -403,11 +402,10 @@ struct wimaxll_handle *wimaxll_open(const char *device)
 	}
 
 	/* Setup the TX side */
-	wmx->nlh_tx = nl_handle_alloc();
-	if (wmx->nlh_tx == NULL) {
-		result = nl_get_errno();
-		wimaxll_msg(wmx, "E: TX: cannot allocate handle: %d (%s)\n",
-			    result, nl_geterror());
+	wmx->nlh_tx = nl_socket_alloc();
+	if (!wmx->nlh_tx) {
+		/* Alloc (malloc) failed */
+		wimaxll_msg(wmx, "E: TX: cannot allocate handle.\n");
 		goto error_nl_handle_alloc_tx;
 	}
 	nl_socket_enable_msg_peek(wmx->nlh_tx);
@@ -415,22 +413,20 @@ struct wimaxll_handle *wimaxll_open(const char *device)
 	result = nl_connect(wmx->nlh_tx, NETLINK_GENERIC);
 	if (result < 0) {
 		wimaxll_msg(wmx, "E: TX: cannot connect netlink: %d (%s)\n",
-			    result, nl_geterror());
+			result, nl_geterror(result));
 		goto error_nl_connect_tx;
 	}
 
 	/* Set up the RX side */
-	wmx->nlh_rx = nl_handle_alloc();
-	if (wmx->nlh_rx == NULL) {
-		result = nl_get_errno();
-		wimaxll_msg(wmx, "E: RX: cannot allocate handle: %d (%s)\n",
-			    result, nl_geterror());
+	wmx->nlh_rx = nl_socket_alloc();
+	if (!wmx->nlh_rx) {
+		wimaxll_msg(wmx, "E: RX: cannot allocate handle.\n");
 		goto error_nl_handle_alloc_rx;
 	}
 	result = nl_connect(wmx->nlh_rx, NETLINK_GENERIC);
 	if (result < 0) {
 		wimaxll_msg(wmx, "E: RX: cannot connect netlink: %d (%s)\n",
-			    result, nl_geterror());
+			    result, nl_geterror(result));
 		goto error_nl_connect_rx;
 	}
 	nl_socket_enable_msg_peek(wmx->nlh_rx);
@@ -442,7 +438,7 @@ struct wimaxll_handle *wimaxll_open(const char *device)
 	result = nl_socket_add_membership(wmx->nlh_rx, wmx->mcg_id);
 	if (result < 0) {
 		wimaxll_msg(wmx, "E: RX: cannot join multicast group %u: %d (%s)\n",
-			    wmx->mcg_id, result, nl_geterror());
+			    wmx->mcg_id, result, nl_geterror(result));
 		goto error_nl_add_membership;
 	}
 	/* Now we check if the device is a WiMAX supported device, by
@@ -465,11 +461,11 @@ error_nl_add_membership:
 error_gnl_resolve:
 	nl_close(wmx->nlh_rx);
 error_nl_connect_rx:
-	nl_handle_destroy(wmx->nlh_rx);
+	nl_socket_free(wmx->nlh_rx);
 error_nl_handle_alloc_rx:
 	nl_close(wmx->nlh_tx);
 error_nl_connect_tx:
-	nl_handle_destroy(wmx->nlh_tx);
+	nl_socket_free(wmx->nlh_tx);
 error_nl_handle_alloc_tx:
 error_no_dev:
 	wimaxll_free(wmx);
@@ -493,9 +489,9 @@ void wimaxll_close(struct wimaxll_handle *wmx)
 {
 	d_fnstart(3, NULL, "(wmx %p)\n", wmx);
 	nl_close(wmx->nlh_rx);
-	nl_handle_destroy(wmx->nlh_rx);
+	nl_socket_free(wmx->nlh_rx);
 	nl_close(wmx->nlh_tx);
-	nl_handle_destroy(wmx->nlh_tx);
+	nl_socket_free(wmx->nlh_tx);
 	wimaxll_free(wmx);
 	d_fnend(3, NULL, "(wmx %p) = void\n", wmx);
 }

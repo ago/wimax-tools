@@ -93,8 +93,8 @@ int wimaxll_reset(struct wimaxll_handle *wmx)
 	if (wmx->ifidx == 0)
 		goto error_not_any;
 
-	msg = nlmsg_new();
-	if (msg == NULL) {
+	msg = nlmsg_alloc();
+	if (!msg) {
 		result = errno;
 		wimaxll_msg(wmx, "E: RESET: cannot allocate generic netlink "
 			  "message: %m\n");

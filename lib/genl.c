@@ -115,7 +115,7 @@ static int family_handler(struct nl_msg *msg, void *_arg)
  * Enumerates the multicast groups available for a generic netlink
  * family and calls the callback with the arguments of each.
  */
-int nl_get_multicast_groups(struct nl_handle *handle,
+int nl_get_multicast_groups(struct nl_sock *handle,
 			    const char *family,
 			    void (*cbf)(void *, const char *, int),
 			    void *priv)
@@ -168,16 +168,16 @@ int nl_get_multicast_groups(struct nl_handle *handle,
 }
 
 
-int genl_ctrl_get_version(struct nl_handle *nlh, const char *name)
+int genl_ctrl_get_version(struct nl_sock *nlh, const char *name)
 {
-	int result = -ENOENT;
+	int result;
 	struct genl_family *fam;
 	struct nl_cache *cache;
 
-	cache = genl_ctrl_alloc_cache(nlh);
-	if (cache == NULL)
-		return nl_get_errno();
+	if ((result = genl_ctrl_alloc_cache(nlh, &cache)) < 0)
+		return result;
 
+	result = -ENOENT;
 	fam = genl_ctrl_search_by_name(cache, name);
 	if (fam) {
 		result = genl_family_get_version(fam);

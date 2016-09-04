@@ -60,18 +60,24 @@ AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug],
 	fi
 ])
 
-# If libnl-1 is installed
-AC_ARG_WITH(libnl1,
-            AC_HELP_STRING([--with-libnl1],
-			   [prefix to libnl (>=1.0-pre7) installation; defaults to
-                            whichever is found in the system with pkg-config.
-                            USE ABSOLUTE PATHS.]),
-            export PKG_CONFIG_PATH="$withval:$withval/lib/pkgconfig")
-PKG_CHECK_MODULES(LIBNL1, libnl-1 >= 1.0-pre7)
-libnl1_prefix=`pkg-config "libnl-1 >= 1.0-pre7" --variable=prefix`
-AC_MSG_RESULT(Using libnl1 from $libnl1_prefix)
-AC_SUBST(LIBNL1_CFLAGS)
-AC_SUBST(LIBNL1_LIBS)
+# If libnl3 is installed
+AC_ARG_WITH(libnl3,
+	AC_HELP_STRING([--with-libnl3],
+		[prefix to libnl3 installation; defaults to
+		whichever is found in the system with pkg-config.
+		USE ABSOLUTE PATHS.]
+	),
+	export PKG_CONFIG_PATH="$withval:$withval/lib/pkgconfig"
+)
+
+PKG_CHECK_MODULES([LIBNL3], [libnl-3.0, libnl-genl-3.0], [
+	AC_DEFINE([HAVE_LIBNL3], [1], [Use libnl-3.0])
+],[
+	AC_MSG_ERROR([libnl-devel >= 3.0 is required])
+])
+
+AC_SUBST(LIBNL3_CFLAGS)
+AC_SUBST(LIBNL3_LIBS)
 
 # Linux WiMAX stack
 LINUX_KERNEL=/usr

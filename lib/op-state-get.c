@@ -76,8 +76,8 @@ int wimaxll_state_get(struct wimaxll_handle *wmx)
 	result = -EBADF;
 	if (wmx->ifidx == 0)
 		goto error_not_any;
-	msg = nlmsg_new();
-	if (msg == NULL) {
+	msg = nlmsg_alloc();
+	if (!msg) {
 		result = errno;
 		wimaxll_msg(wmx, "E: STATE_GET: cannot allocate generic"
 			"netlink message: %m\n");

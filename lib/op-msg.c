@@ -414,9 +414,9 @@ ssize_t wimaxll_msg_write(struct wimaxll_handle *wmx,
 	result = -EBADF;
 	if (wmx->ifidx == 0)
 		goto error_not_any;
-	nl_msg = nlmsg_new();
-	if (nl_msg == NULL) {
-		result = nl_get_errno();
+	nl_msg = nlmsg_alloc();
+	if (!nl_msg) {
+		result = errno;
 		wimaxll_msg(wmx, "E: cannot allocate generic netlink "
 			  "message: %m\n");
 		goto error_msg_alloc;
@@ -424,8 +424,8 @@ ssize_t wimaxll_msg_write(struct wimaxll_handle *wmx,
 	msg = genlmsg_put(nl_msg, NL_AUTO_PID, NL_AUTO_SEQ,
 			  wimaxll_family_id(wmx), 0, 0,
 			  WIMAX_GNL_OP_MSG_FROM_USER, WIMAX_GNL_VERSION);
-	if (msg == NULL) {
-		result = nl_get_errno();
+	if (!msg) {
+		result = errno;
 		wimaxll_msg(wmx, "E: %s: error preparing message: %zd\n",
 			  __func__, result);
 		goto error_msg_prep;

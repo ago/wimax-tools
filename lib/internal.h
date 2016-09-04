@@ -40,6 +40,7 @@
 #include <wimaxll.h>
 
 struct nl_msg;
+struct nl_sock;
 struct nlmsgerr;
 struct sockaddr_nl;
 
@@ -96,8 +97,8 @@ struct wimaxll_handle {
 	char name[__WIMAXLL_IFNAME_LEN];
 	void *priv;
 
-	struct nl_handle *nlh_tx;
-	struct nl_handle *nlh_rx;
+	struct nl_sock *nlh_tx;
+	struct nl_sock *nlh_rx;
 
 	wimaxll_msg_to_user_cb_f msg_to_user_cb;
 	void *msg_to_user_priv;
@@ -131,9 +132,9 @@ void wimaxll_msg(struct wimaxll_handle *, const char *fmt, ...)
 
 /* Generic Netlink utilities */
 
-int nl_get_multicast_groups(struct nl_handle *, const char *,
+int nl_get_multicast_groups(struct nl_sock *, const char *,
 			    void (*cb)(void *, const char *, int),
 			    void *);
-int genl_ctrl_get_version(struct nl_handle *, const char *);
+int genl_ctrl_get_version(struct nl_sock *, const char *);
 
 #endif /* #ifndef __lib_internal_h__ */
