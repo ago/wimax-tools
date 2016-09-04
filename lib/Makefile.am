@@ -4,7 +4,7 @@
 #
 INCLUDES = \
 	-I$(top_builddir)/include -I$(top_srcdir)/include \
-	$(LIBNL1_CFLAGS) \
+	$(LIBNL3_CFLAGS) \
 	-I $(LINUX_INCLUDE_PATH)
 
 noinst_HEADERS = debug.h internal.h
@@ -14,14 +14,12 @@ libwimaxll_sources = 		\
 	log.c			\
 	misc.c			\
 	op-open.c		\
-        op-msg.c		\
-        op-reset.c		\
-        op-rfkill.c		\
-        op-state-get.c		\
-        re-state-change.c	\
+	op-msg.c		\
+	op-reset.c		\
+	op-rfkill.c		\
+	op-state-get.c		\
+	re-state-change.c	\
 	wimax.c
-
-
 
 libwimaxll_a_SOURCES = $(libwimaxll_sources)
 libwimaxll_la_SOURCES = $(libwimaxll_sources)
@@ -32,7 +30,7 @@ libwimaxll_la_CFLAGS = $(AM_CFLAGS)
 # REVISION: inc for changes that do not affect the external interface
 # AGE: inc for added interfaces
 #      set to zero if removed existing interfaces
-libwimaxll_la_LDFLAGS = -version-info 1:0:1 $(LIBNL1_LIBS)
+libwimaxll_la_LDFLAGS = -version-info 1:0:1 $(LIBNL3_LIBS)
 
 # misc.c includes this file
 BUILT_SOURCES = names-vals.h
@@ -74,7 +72,7 @@ libwimaxll_i2400m_la_CFLAGS = $(AM_CFLAGS)
 # AGE: inc for added interfaces
 #      set to zero if removed existing interfaces
 libwimaxll_i2400m_la_LIBADD = libwimaxll.la
-libwimaxll_i2400m_la_LDFLAGS = -lpthread -version-info 1:0:1 $(LIBNL1_LIBS)
+libwimaxll_i2400m_la_LDFLAGS = -lpthread -version-info 1:0:1 $(LIBNL3_LIBS)
 
 lib_LTLIBRARIES += libwimaxll-i2400m.la
 lib_LIBRARIES += libwimaxll-i2400m.a

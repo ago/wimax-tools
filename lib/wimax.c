@@ -107,12 +107,12 @@ int wimaxll_gnl_ack_cb(struct nl_msg *msg, void *_ctx)
 	int result;
 	struct nlmsghdr *nl_hdr;
 	struct nlmsgerr *nl_err;
-	size_t size = nlmsg_len(nlmsg_hdr(msg));
+	size_t size = nlmsg_datalen(nlmsg_hdr(msg));
 	struct wimaxll_cb_ctx *ctx = _ctx;
 
 	d_fnstart(7, NULL, "(msg %p ctx %p)\n", msg, _ctx);
 	nl_hdr = nlmsg_hdr(msg);
-	size = nlmsg_len(nl_hdr);
+	size = nlmsg_datalen(nl_hdr);
 	nl_err = nlmsg_data(nl_hdr);
 
 	if (size < sizeof(*nl_err)) {
